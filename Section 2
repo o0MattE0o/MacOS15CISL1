@@ -311,7 +311,5 @@ echo "Section 2 - System Settings"
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
             killall SystemUIServer
 
-
-
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
