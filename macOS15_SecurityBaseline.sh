@@ -61,7 +61,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.2 - Networking"
         # 2.2.1	Ensure Firewall Is Enabled
         echo "Section 2.2.1 - Ensure Firewall Is Enabled"
-            #sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
+            sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
         # 2.2.2	Ensure Firewall Stealth Mode Is Enabled
         echo "Section 2.2.2 - Ensure Firewall Stealth Mode Is Enabled"
             sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
@@ -103,14 +103,14 @@ echo "Section 2 - System Settings"
             echo "Section 2.3.3.4 - Ensure Printer Sharing Is Disabled"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
-            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
-                sudo systemsetup -setremotelogin off
+            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled (Skipped)"
+                #Skipped
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
             # 2.3.3.7 Ensure Remote Apple Events Is Disabled
-            echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled"
-                sudo systemsetup -setremoteappleevents off 2>/dev/null
+            echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled (Skipped)"
+                #Skipped
             # 2.3.3.8 Ensure Internet Sharing Is Disabled
             echo "Section 2.3.3.8 - Ensure Internet Sharing Is Disabled"
                 sudo /usr/bin/defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
@@ -129,9 +129,8 @@ echo "Section 2 - System Settings"
                     sudo -u "$user" /usr/bin/defaults write com.apple.amp.mediasharingd home-sharing-enabled -bool false
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
-            echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
-                sudo defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerState -int 0
-                sudo launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist
+            echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled (Skipped)"
+                #Skipped
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -163,16 +162,8 @@ echo "Section 2 - System Settings"
     #2.5 Siri
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
-        echo "Section 2.5.1 - Audit Siri Settings"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write com.apple.assistant.support 'Assistant Enabled' -bool false
-                sudo -u "$user" /usr/bin/defaults write com.apple.Siri LockscreenEnabled -bool false
-                sudo -u "$user" /usr/bin/defaults write com.apple.Siri StatusMenuVisible -bool false
-                sudo -u "$user" /usr/bin/defaults write com.apple.Siri TypeToSiriEnabled -bool false
-                sudo -u "$user" /usr/bin/defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
-                sudo /usr/bin/killall -HUP cfprefsd
-                sudo /usr/bin/killall SystemUIServer
-            done
+        echo "Section 2.5.1 - Audit Siri Settings (Skipped)"
+            #Skipped
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
@@ -183,14 +174,8 @@ echo "Section 2 - System Settings"
         # 2.6.1 Location Services
         echo "Section 2.6.1 - Location Services"
             # 2.6.1.1 Ensure Location Services Is Enabled
-            echo "Section 2.6.1.1 - Ensure Location Services Is Enabled"
-                if sudo /bin/launchctl bootstrap system /System/Library/LaunchDaemons/com.apple.locationd.plist; then
-                    sudo /usr/bin/defaults write /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd LocationServicesEnabled -bool true
-                    sudo /usr/bin/killall locationd
-                    echo "     Location Services have been enabled."
-                else
-                    echo "     Failed to load locationd. Please check for richer errors using launchctl bootstrap."
-                fi
+            echo "Section 2.6.1.1 - Ensure Location Services Is Enabled(Skipped)"
+                #Skipped
             # 2.6.1.2 Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled
             echo "Section 2.6.1.2 - Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled"
                 sudo /usr/bin/defaults write /Library/Preferences/com.apple.locationmenu.plist ShowSystemServices -bool true
@@ -222,20 +207,15 @@ echo "Section 2 - System Settings"
             sudo defaults write /Library/Preferences/com.apple.applicationaccess.plist allowApplePersonalizedAdvertising -bool false
         # 2.6.5 Ensure Gatekeeper Is Enabled
         echo "Section 2.6.5 - Ensure Gatekeeper Is Enabled"
-            #sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
-            #sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
+            sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
+            sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
         # 2.6.6 Ensure FileVault Is Enabled
         echo "Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)"
             # Skipped
             # Should be carried out via Intune Policy
         # 2.6.7 Audit Lockdown Mode
-        echo "Section 2.6.7 - Audit Lockdown Mode"
-            status=$(defaults read /Library/Preferences/com.apple.security.lockdownmode.plist LockdownModeEnabled)
-            if [ "$status" -eq 1 ]; then
-                echo "     Lockdown Mode is enabled."
-            else
-                echo "     Lockdown Mode is disabled."
-            fi
+        echo "Section 2.6.7 - Audit Lockdown Mode (Skipped)"
+            #Skipped
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
         echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences (Skipped)"
             # Skipped
@@ -243,17 +223,17 @@ echo "Section 2 - System Settings"
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
         echo "Section 2.7.1 - Ensure Screen Saver Corners Are Secure"
-            # Check if the :Forced entry exists
-            #if ! sudo /usr/libexec/PlistBuddy -c "Print :Forced" /Library/Preferences/com.apple.dock.plist &>/dev/null; then
-            #    sudo /usr/libexec/PlistBuddy -c "Add :Forced array" /Library/Preferences/com.apple.dock.plist
-            #fi
-            # Add the necessary entries
-            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0 dict" /Library/Preferences/com.apple.dock.plist
-            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings dict" /Library/Preferences/com.apple.dock.plist
-            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-bl-corner integer 6" /Library/Preferences/com.apple.dock.plist
-            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-br-corner integer 6" /Library/Preferences/com.apple.dock.plist
-            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tl-corner integer 6" /Library/Preferences/com.apple.dock.plist
-            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tr-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            Check if the :Forced entry exists
+            if ! sudo /usr/libexec/PlistBuddy -c "Print :Forced" /Library/Preferences/com.apple.dock.plist &>/dev/null; then
+                sudo /usr/libexec/PlistBuddy -c "Add :Forced array" /Library/Preferences/com.apple.dock.plist
+            fi
+            Add the necessary entries
+            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0 dict" /Library/Preferences/com.apple.dock.plist
+            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings dict" /Library/Preferences/com.apple.dock.plist
+            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-bl-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-br-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tl-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tr-corner integer 6" /Library/Preferences/com.apple.dock.plist
         # 2.7.2 Audit iPhone Mirroring
         echo "Section 2.7.2 - Audit iPhone Mirroring"
             sudo defaults write /Library/Preferences/com.apple.applicationaccess.plist allowiPhoneMirroring -bool false
@@ -390,11 +370,8 @@ echo "Section 3 - Logging and Auditing"
     echo "Section 3.3 - Ensure install.log Is Retained for 365 or More Days and No Maximum Size"
         sudo sed -i '' "s/* file \/var\/log\/install.log.*/* file \/var\/log\/install.log format='\$((Time)(JZ)) \$Host \$Sender[\$PID]: \$Message' rotate=utc compress file_max=50M size_only ttl=365/g" /etc/asl/com.apple.install
     # 3.4 Ensure Security Auditing Retention Is Enabled
-    echo "Section 3.4 - Ensure Security Auditing Retention Is Enabled"
-        sudo cp /etc/security/audit_control /etc/security/audit_control.bak
-        sudo sed -i '' 's/^expire-after:.*/expire-after:60d OR 5G/' /etc/security/audit_control
-        sudo launchctl stop com.apple.auditd
-        sudo launchctl start com.apple.auditd
+    echo "Section 3.4 - Ensure Security Auditing Retention Is Enabled (Skipped)"
+        # Skipped
     # 3.5 Ensure Access to Audit Records Is Controlled
     echo "Section 3.5 - Ensure Access to Audit Records Is Controlled"
         sudo /usr/sbin/chown -R root:wheel /etc/security/audit_control
@@ -499,21 +476,18 @@ echo "Section 5 - System Access, Authentication and Authorization"
             echo "Guest home folder does not exist."
         fi
     # 5.10 Ensure XProtect Is Running and Updated
-    echo "Section 5.10 - Ensure XProtect Is Running and Updated"
-        sudo softwareupdate --background-critical
+    echo "Section 5.10 - Ensure XProtect Is Running and Updated (Skipped)"
+        # Skipped
     # 5.11 Ensure Logging Is Enabled for Sudo
-    echo "Section 5.11 - Ensure Logging Is Enabled for Sudo"
-        sudo cp /etc/sudoers /etc/sudoers.bak
-        echo "Defaults log_output" | sudo tee -a /etc/sudoers
-        sudo visudo -c
+    echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
+        #Skipped 
 # 6 Applications
 echo "Section 6 - Applications"
     # 6.1 Finder
     echo "Section 6.1 - Finder"
         # 6.1.1	Ensure Show All Filename Extensions Setting is Enabled
-        echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled"
-            sudo defaults write NSGlobalDomain AppleShowAllExtensions
-            sudo killall Finder
+        echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled (Skipped)"
+            #Skipped
     # 6.2 Mail
     echo "Section 6.2 - Mail"
         # 6.2.1 Ensure Protect Mail Activity in Mail Is Enabled
@@ -539,13 +513,11 @@ echo "Section 6 - Applications"
         echo "Section 6.3.5 - Audit Hide IP Address in Safari Setting (Skipped)"
             # Skipped
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
-        echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
-            sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
-            killall Safari
+        echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled (Skipped)"
+            # Skipped
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
-        echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
-            sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
-            killall Safari
+        echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled (Skipped)"
+            # Skipped
         # 6.3.8 Audit AutoFill
         echo "Section 6.3.8 - Audit AutoFill (Skipped)"
             # Skipped
