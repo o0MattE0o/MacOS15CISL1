@@ -1,7 +1,7 @@
-administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
-administrator@MacBook-Pro ~ % sudo /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
-
-
+Last login: Tue Mar 18 15:09:45 on console
+administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh 
+administrator@MacBook-Pro ~ % sudo /Users/administrator/Downloads/macOS15_SecurityBaseline.sh 
+Password:
 Section 1 - Install Updates, Patches and Additional Security Software
 Section 1.1 - Ensure All Apple-provided Software Is Current
 Software Update Tool
@@ -38,7 +38,7 @@ Section 2.3.2 - Date & Time
 Section 2.3.2.1 - Ensure Set Time and Date Automatically Is Enabled
 Network Time is already on.
 Section 2.3.2.2 - Ensure Time Is Set Within Appropriate Limits
-+0.042993 +/- 0.009011 time.apple.com 2a01:b740:a16:3000::1e2
++0.031062 +/- 0.011022 time.apple.com 2a01:b740:a16:3000::1e2
 Section 2.3.3 - Sharing
 Section 2.3.3.1 - Ensure DVD or CD Sharing Is Disabled
 Boot-out failed: 3: No such process
@@ -48,7 +48,7 @@ Section 2.3.3.3 - Ensure File Sharing Is Disabled
 Boot-out failed: 3: No such process
 Section 2.3.3.4 - Ensure Printer Sharing Is Disabled
 Section 2.3.3.5 - Ensure Remote Login Is Disabled
-Do you really want to turn remote login off? If you do, you will lose this connection and can only turn it back on locally at the server (yes/no)? no
+Do you really want to turn remote login off? If you do, you will lose this connection and can only turn it back on locally at the server (yes/no)? No
 Section 2.3.3.6 - Ensure Remote Management Is Disabled
 Starting...
 Removed preference to start ARD after reboot.
@@ -93,7 +93,7 @@ Section 2.6.4 - Ensure Limit Ad Tracking Is Enabled
 Section 2.6.5 - Ensure Gatekeeper Is Enabled
 Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)
 Section 2.6.7 - Audit Lockdown Mode
-2025-03-18 14:04:01.784 defaults[1886:23622] 
+2025-03-18 15:16:54.803 defaults[1959:26821] 
 The domain/default pair of (/Library/Preferences/com.apple.security.lockdownmode.plist, LockdownModeEnabled) does not exist
 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 234: [: : integer expression expected
      Lockdown Mode is disabled.
@@ -117,12 +117,13 @@ Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled (S
 Section 2.10.5 - Ensure Show Password Hints Is Disabled (Skipped)
 Section 2.11 - Touch ID & Password (Login Password)
 Section 2.11.1 - Ensure Users' Accounts Do Not Have a Password Hint
+administrator   Windows
+administrator   Windows
 Section 2.11.2 - Audit Touch ID (Skipped)
 Section 2.12 - Users & Groups
 Section 2.12.1 - Ensure Guest Account Is Disabled
 Section 2.12.2 - Ensure Guest Access to Shared Folders Is Disabled
 Section 2.12.3 - Ensure Automatic Login Is Disabled
-autoLoginUser key does not exist. Automatic login is already disabled. (OK)
 Section 2.13 - Passwords
 Section 2.13.1 - Audit Passwords System Preference Setting (Manually Check)
 Section 2.14 - Game Center
@@ -175,19 +176,18 @@ Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero (Manually Check)
 Section 5.5 - Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)
 Section 5.6 - Ensure the 'root' Account Is Disabled (Skipped)
 Section 5.7 - Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session
-YES (0)
 Section 5.8 - Ensure a Login Window Banner Exists (Skipped)
 Section 5.9 - Ensure the Guest Home Folder Does Not Exist
 Guest home folder does not exist.
 Section 5.10 - Ensure XProtect Is Running and Updated
-softwareupdate[2002]: Triggering a background check with forced scan (critical and config-data updates only) ...
+softwareupdate[2053]: Triggering a background check with forced scan (critical and config-data updates only) ...
 Section 5.11 - Ensure Logging Is Enabled for Sudo
 Defaults log_output
 /etc/sudoers: parsed OK
 Section 6 - Applications
 Section 6.1 - Finder
 Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled
-2025-03-18 14:04:03.046 defaults[2013:24058] 
+2025-03-18 15:16:55.853 defaults[2064:27215] 
 Rep argument is not a dictionary
 Defaults have not been changed.
 Section 6.2 - Mail
