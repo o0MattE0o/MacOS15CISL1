@@ -3,30 +3,6 @@
 # Level 1 - Security Settings
 # https://workbench.cisecurity.org/benchmarks/18636/
 
-# Ensure script runs with administrative privileges
-if [ "$(id -u)" -ne 0 ]; then
-    echo "This script must be run as root!"
-    exit 1
-fi
-
-# Function to apply system settings safely
-apply_setting() {
-    local domain=$1
-    local key=$2
-    local value=$3
-
-    echo "Applying setting: $domain -> $key = $value"
-
-    # Handle boolean values properly
-    if [[ "$value" == "true" || "$value" == "false" ]]; then
-        sudo defaults write "$domain" "$key" -bool "$value"
-    elif [[ "$value" =~ ^[0-9]+$ ]]; then
-        sudo defaults write "$domain" "$key" -int "$value"
-    else
-        sudo defaults write "$domain" "$key" "$value"
-    fi
-}
-
 # 1 Install Updates, Patches and Additional Security Software
 echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.1 Ensure All Apple-provided Software Is Current
@@ -34,10 +10,10 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
         #sudo softwareupdate -i -a
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
-        apply_setting "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticCheckEnabled" -bool true
-        apply_setting "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticDownload" -bool true
-        apply_setting "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticallyInstallMacOSUpdates" -bool true
-        apply_setting "/Library/Preferences/com.apple.commerce" "AutoUpdate" -bool TRUE
+        sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticCheckEnabled" -bool true
+        sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticDownload" -bool true
+        sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticallyInstallMacOSUpdates" -bool true
+        sudo defaults write "/Library/Preferences/com.apple.commerce" "AutoUpdate" -bool TRUE
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -95,11 +71,11 @@ echo "Section 2 - System Settings"
         echo "Section 2.3.1 - AirDrop & Handoff"
             # 2.3.1.1 Ensure AirDrop Is Disabled When Not Actively Transferring Files
             echo "Section 2.3.1.1 - Ensure AirDrop Is Disabled When Not Actively Transferring Files"
-                apply_setting "com.apple.NetworkBrowser" "DisableAirDrop" -bool true
+                sudo defaults write "com.apple.NetworkBrowser" "DisableAirDrop" -bool true
                 killall Finder
             # 2.3.1.2 Ensure AirPlay Receiver Is Disabled
             echo "Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled"
-                apply_setting "/Library/Preferences/com.apple.Bluetooth" "ControllerPowerState" -int 0
+                sudo defaults write "/Library/Preferences/com.apple.Bluetooth" "ControllerPowerState" -int 0
                 sudo launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist
         # 2.3.2 Date & Time
         echo "Section 2.3.2 - Date & Time"
@@ -187,7 +163,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.4 - Control Center"
         # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
         echo "Section 2.4.1 - Ensure Show Wi-Fi status in Menu Bar Is Enabled"
-            defaults write com.apple.systemuiserver menuExtras -array-add "/System/Library/CoreServices/Menu Extras/AirPort.menu"
+            sudo defaults write com.apple.systemuiserver menuExtras -array-add "/System/Library/CoreServices/Menu Extras/AirPort.menu"
             killall SystemUIServer
         # 2.4.2	Ensure Show Bluetooth Status in Menu Bar Is Enabled
         echo "Section 2.4.2 - Ensure Show Bluetooth Status in Menu Bar Is Enabled"
@@ -363,14 +339,14 @@ echo "Section 2 - System Settings"
             sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            apply_setting "com.apple.screensaver" "askForPassword" -int 1
-            apply_setting "com.apple.screensaver" "askForPasswordDelay" -int 5
+            sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
+            sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
         # 2.10.4 Ensure Login Window Displays as Name and Password Is Enabled
         echo "Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled"
-            apply_setting "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
+            sudo defaults write "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
         # 2.10.5 Ensure Show Password Hints Is Disabled
         echo "Section 2.10.5 - Ensure Show Password Hints Is Disabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
@@ -387,7 +363,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.12 - Users & Groups"
         # 2.12.1 Ensure Guest Account Is Disabled
         echo "Section 2.12.1 - Ensure Guest Account Is Disabled"
-            apply_setting "/Library/Preferences/com.apple.loginwindow" "GuestEnabled" -bool false
+            sudo defaults write "/Library/Preferences/com.apple.loginwindow" "GuestEnabled" -bool false
         # 2.12.2 Ensure Guest Access to Shared Folders Is Disabled
         echo "Section 2.12.2 - Ensure Guest Access to Shared Folders Is Disabled"
             sudo /usr/sbin/sysadminctl -smbGuestAccess off
@@ -678,7 +654,7 @@ echo "Section 6 - Applications"
             killall Safari
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
         echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
-            defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+            sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
             killall Safari
         # 6.3.8 Audit AutoFill
         echo "Section 6.3.8 - Audit AutoFill (Skipped)"
