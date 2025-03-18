@@ -1,3 +1,8 @@
+#!/bin/bash
+# CIS Apple macOS 15.0 Sequoia Benchmark v1.0.0
+# Level 1 - Security Settings
+# https://workbench.cisecurity.org/benchmarks/18636/
+
 # 5 System Access, Authentication and Authorization
 echo "Section 5 - System Access, Authentication and Authorization"
     # 5.1 File System Permissions and Access Controls
@@ -86,3 +91,6 @@ echo "Section 5 - System Access, Authentication and Authorization"
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
         #Skipped 
+
+echo "All CIS Policies have been applied, and this is the end of the script."
+exit 0
