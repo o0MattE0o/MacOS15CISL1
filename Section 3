@@ -1,3 +1,8 @@
+#!/bin/bash
+# CIS Apple macOS 15.0 Sequoia Benchmark v1.0.0
+# Level 1 - Security Settings
+# https://workbench.cisecurity.org/benchmarks/18636/
+
 # 3 Logging and Auditing
 echo "Section 3 - Logging and Auditing"
     # 3.1 Ensure Security Auditing Is Enabled
@@ -38,3 +43,6 @@ echo "Section 3 - Logging and Auditing"
         sudo /bin/chmod -R 440 "$(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')"
     # 3.6 Audit Software Inventory
     echo "Section 3.6 - Audit Software Inventory (Manually Check)"
+
+echo "All CIS Policies have been applied, and this is the end of the script."
+exit 0
