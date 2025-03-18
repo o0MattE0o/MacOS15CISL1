@@ -61,7 +61,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.2 - Networking"
         # 2.2.1	Ensure Firewall Is Enabled
         echo "Section 2.2.1 - Ensure Firewall Is Enabled"
-            sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
+            #sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
         # 2.2.2	Ensure Firewall Stealth Mode Is Enabled
         echo "Section 2.2.2 - Ensure Firewall Stealth Mode Is Enabled"
             sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
@@ -222,8 +222,8 @@ echo "Section 2 - System Settings"
             sudo defaults write /Library/Preferences/com.apple.applicationaccess.plist allowApplePersonalizedAdvertising -bool false
         # 2.6.5 Ensure Gatekeeper Is Enabled
         echo "Section 2.6.5 - Ensure Gatekeeper Is Enabled"
-            sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
-            sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
+            #sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
+            #sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
         # 2.6.6 Ensure FileVault Is Enabled
         echo "Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)"
             # Skipped
@@ -244,16 +244,16 @@ echo "Section 2 - System Settings"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
         echo "Section 2.7.1 - Ensure Screen Saver Corners Are Secure"
             # Check if the :Forced entry exists
-            if ! sudo /usr/libexec/PlistBuddy -c "Print :Forced" /Library/Preferences/com.apple.dock.plist &>/dev/null; then
-                sudo /usr/libexec/PlistBuddy -c "Add :Forced array" /Library/Preferences/com.apple.dock.plist
-            fi
+            #if ! sudo /usr/libexec/PlistBuddy -c "Print :Forced" /Library/Preferences/com.apple.dock.plist &>/dev/null; then
+            #    sudo /usr/libexec/PlistBuddy -c "Add :Forced array" /Library/Preferences/com.apple.dock.plist
+            #fi
             # Add the necessary entries
-            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0 dict" /Library/Preferences/com.apple.dock.plist
-            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings dict" /Library/Preferences/com.apple.dock.plist
-            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-bl-corner integer 6" /Library/Preferences/com.apple.dock.plist
-            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-br-corner integer 6" /Library/Preferences/com.apple.dock.plist
-            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tl-corner integer 6" /Library/Preferences/com.apple.dock.plist
-            sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tr-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0 dict" /Library/Preferences/com.apple.dock.plist
+            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings dict" /Library/Preferences/com.apple.dock.plist
+            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-bl-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-br-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tl-corner integer 6" /Library/Preferences/com.apple.dock.plist
+            #sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-tr-corner integer 6" /Library/Preferences/com.apple.dock.plist
         # 2.7.2 Audit iPhone Mirroring
         echo "Section 2.7.2 - Audit iPhone Mirroring"
             sudo defaults write /Library/Preferences/com.apple.applicationaccess.plist allowiPhoneMirroring -bool false
@@ -320,18 +320,18 @@ echo "Section 2 - System Settings"
     echo "Section 2.12 - Users & Groups"
         # 2.12.1 Ensure Guest Account Is Disabled
         echo "Section 2.12.1 - Ensure Guest Account Is Disabled"
-            sudo defaults write "/Library/Preferences/com.apple.loginwindow" "GuestEnabled" -bool false
+            #sudo defaults write "/Library/Preferences/com.apple.loginwindow" "GuestEnabled" -bool false
         # 2.12.2 Ensure Guest Access to Shared Folders Is Disabled
         echo "Section 2.12.2 - Ensure Guest Access to Shared Folders Is Disabled"
             sudo /usr/sbin/sysadminctl -smbGuestAccess off
         # 2.12.3 Ensure Automatic Login Is Disabled
         echo "Section 2.12.3 - Ensure Automatic Login Is Disabled"
-            if sudo /usr/bin/defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser &>/dev/null; then
-                sudo /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
-                echo "Automatic login has been disabled."
-            else
-                echo "autoLoginUser key does not exist. Automatic login is already disabled. (OK)"
-            fi
+            #if sudo /usr/bin/defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser &>/dev/null; then
+            #    sudo /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
+            #    echo "Automatic login has been disabled."
+            #else
+            #    echo "autoLoginUser key does not exist. Automatic login is already disabled. (OK)"
+            #fi
     # 2.13 Passwords
     echo "Section 2.13 - Passwords"
         # 2.13.1 Audit Passwords System Preference Setting
@@ -484,7 +484,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # Skipped
     # 5.7 Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session
     echo "Section 5.7 - Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session"
-        sudo /usr/bin/security authorizationdb write system.login.screensaver allow
+        # sudo /usr/bin/security authorizationdb write system.login.screensaver allow
         # Running this command will disable Touch ID to unlock the screen saver. To re-enable Touch ID for users, run the following command:
         # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow screenUnlockMode -int 1
     # 5.8 Ensure a Login Window Banner Exists
