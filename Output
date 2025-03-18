@@ -1,0 +1,219 @@
+Last login: Tue Mar 18 13:59:33 on console
+administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
+administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
+administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh]
+chmod: /Users/administrator/Downloads/macOS15_SecurityBaseline.sh]: No such file or directory
+administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
+administrator@MacBook-Pro ~ % sudo /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
+Password:
+Section 1 - Install Updates, Patches and Additional Security Software
+Section 1.1 - Ensure All Apple-provided Software Is Current
+Software Update Tool
+
+Finding available software
+No updates are available.
+Section 1.2 - Ensure Auto Update Is Enabled
+Section 1.3 - Ensure Download New Updates When Available Is Enabled
+Section 1.4 - Ensure Install of macOS Updates Is Enabled
+Section 1.5 - Ensure Install Application Updates from the App Store Is Enabled
+Section 1.6 - Ensure Install Security Responses and System Files Is Enabled
+Section 1.7 - Ensure Software Update Deferment Is Less Than or Equal to 30 Days
+Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)
+Section 2 - System Settings
+Section 2.1 - Apple Account
+Section 2.1.1 - iCloud
+Section 2.1.1.1 - Audit iCloud Keychain
+Section 2.1.1.2 - Audit iCloud Drive
+Section 2.1.1.3 - Ensure iCloud Drive Document and Desktop Sync Is Disabled
+Section 2.1.1.4 - Audit Security Keys Used With Apple Accounts
+Section 2.1.1.5 - Audit Freeform Sync to iCloud
+Section 2.1.1.6 - Audit Find My Mac
+Section 2.1.2 - Audit App Store Password Settings
+Section 2.2 - Networking
+Section 2.2.1 - Ensure Firewall Is Enabled
+Section 2.2.2 - Ensure Firewall Stealth Mode Is Enabled
+Section 2.3 - General
+Section 2.3.1 - AirDrop & Handoff
+Section 2.3.1.1 - Ensure AirDrop Is Disabled When Not Actively Transferring Files
+Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled
+Unload failed: 5: Input/output error
+Try running `launchctl bootout` as root for richer errors.
+Section 2.3.2 - Date & Time
+Section 2.3.2.1 - Ensure Set Time and Date Automatically Is Enabled
+Network Time is already on.
+Section 2.3.2.2 - Ensure Time Is Set Within Appropriate Limits
++0.042993 +/- 0.009011 time.apple.com 2a01:b740:a16:3000::1e2
+Section 2.3.3 - Sharing
+Section 2.3.3.1 - Ensure DVD or CD Sharing Is Disabled
+Boot-out failed: 3: No such process
+Section 2.3.3.2 - Ensure Screen Sharing Is Disabled
+Boot-out failed: 3: No such process
+Section 2.3.3.3 - Ensure File Sharing Is Disabled
+Boot-out failed: 3: No such process
+Section 2.3.3.4 - Ensure Printer Sharing Is Disabled
+Section 2.3.3.5 - Ensure Remote Login Is Disabled
+Do you really want to turn remote login off? If you do, you will lose this connection and can only turn it back on locally at the server (yes/no)? no
+Section 2.3.3.6 - Ensure Remote Management Is Disabled
+Starting...
+Removed preference to start ARD after reboot.
+Done.
+Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled
+setremoteappleevents: Turning Remote AppleEvents on or off requires Full Disk Access privileges.
+Section 2.3.3.8 - Ensure Internet Sharing Is Disabled
+Section 2.3.3.9 - Ensure Content Caching Is Disabled
+     Content caching is already deactivated.
+Section 2.3.3.10 - Ensure Media Sharing Is Disabled
+Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled
+Unload failed: 5: Input/output error
+Try running `launchctl bootout` as root for richer errors.
+Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)
+Section 2.3.4 - Time Machine
+Section 2.3.4.1 - Ensure Backup Automatically is Enabled If Time Machine Is Enabled
+     Time Machine is already disabled.
+Section 2.3.4.2 - Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled (Skipped)
+Section 2.4 - Control Center
+Section 2.4.1 - Ensure Show Wi-Fi status in Menu Bar Is Enabled
+Section 2.4.2 - Ensure Show Bluetooth Status in Menu Bar Is Enabled
+Section 2.5 - Siri
+Section 2.5.1 - Audit Siri Settings
+No matching processes were found
+Section 2.5.2 - Ensure Listen for (Siri) Is Disabled
+Section 2.6 - Privacy & Security
+Section 2.6.1 - Location Services
+Section 2.6.1.1 - Ensure Location Services Is Enabled
+Bootstrap failed: 5: Input/output error
+     Failed to load locationd. Please check for richer errors using launchctl bootstrap.
+Section 2.6.1.2 - Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled
+Section 2.6.1.3 - Audit Location Services Access (Skipped)
+Section 2.6.2 - Full Disk Access
+Section 2.6.2.1 - 2.6.2.1 Audit Full Disk Access for Applications (Manually Check)
+Section 2.6.3 - Analytics & Improvements
+Section 2.6.3.1 - Ensure Share Mac Analytics Is Disabled
+Section 2.6.3.2 - Ensure Improve Siri & Dictation Is Disabled
+Section 2.6.3.3 - Ensure Improve Assistive Voice Features Is Disabled
+Section 2.6.3.4 - Ensure 'Share with app developers' Is Disabled
+Section 2.6.3.5 - Ensure Share iCloud Analytics Is Disabled (Manually Check)
+Section 2.6.4 - Ensure Limit Ad Tracking Is Enabled
+Section 2.6.5 - Ensure Gatekeeper Is Enabled
+Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)
+Section 2.6.7 - Audit Lockdown Mode
+2025-03-18 14:04:01.784 defaults[1886:23622] 
+The domain/default pair of (/Library/Preferences/com.apple.security.lockdownmode.plist, LockdownModeEnabled) does not exist
+/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 234: [: : integer expression expected
+     Lockdown Mode is disabled.
+Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences (Skipped)
+Section 2.7 - Desktop & Dock
+Section 2.7.1 - Ensure Screen Saver Corners Are Secure
+Section 2.7.2 - Audit iPhone Mirroring
+Section 2.8 - Displays
+Section 2.8.1 - Audit Universal Control Settings
+Section 2.9 - Battery (Energy Saver)
+Section 2.9.1 - OS Resuming From Sleep
+Section 2.9.1.1 - Ensure the OS Is Not Active When Resuming from Standby (Intel)
+Section 2.9.1.2 - Ensure Sleep and Display Sleep Is Enabled on Apple Silicon Devices
+Section 2.9.2 - Ensure Power Nap Is Disabled for Intel Macs
+Section 2.9.3 - Ensure Wake for Network Access Is Disabled
+Section 2.10 - Lock Screen
+Section 2.10.1 - Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled (Skipped)
+Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately (Skipped)
+Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled (skipped)
+Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled (Skipped)
+Section 2.10.5 - Ensure Show Password Hints Is Disabled (Skipped)
+Section 2.11 - Touch ID & Password (Login Password)
+Section 2.11.1 - Ensure Users' Accounts Do Not Have a Password Hint
+Section 2.11.2 - Audit Touch ID (Skipped)
+Section 2.12 - Users & Groups
+Section 2.12.1 - Ensure Guest Account Is Disabled
+Section 2.12.2 - Ensure Guest Access to Shared Folders Is Disabled
+Section 2.12.3 - Ensure Automatic Login Is Disabled
+autoLoginUser key does not exist. Automatic login is already disabled. (OK)
+Section 2.13 - Passwords
+Section 2.13.1 - Audit Passwords System Preference Setting (Manually Check)
+Section 2.14 - Game Center
+Section 2.14.1 - Audit Game Center Settings
+Section 2.15 - Notifications
+Section 2.15.1 - Audit Notification & Focus Settings (Manually Check)
+Section 2.16 - Wallet & Apple Pay
+Section 2.16.1 - Audit Wallet & Apple Pay Settings (Manually Check)
+Section 2.17 - Internet Accounts
+Section 2.17.1 - Audit Internet Accounts for Authorized Use (Manually Check)
+Section 2.18 - Keyboard
+Section 2.18.1 - Ensure On-Device Dictation Is Enabled
+Section 3 - Logging and Auditing
+Section 3.1 - Ensure Security Auditing Is Enabled
+Security auditing is enabled. (OK)
+Section 3.2 - Ensure Security Auditing Flags For User-Attributable Events Are Configured Per Local Organizational Requirements
+The audit_control file does not contain the specified flags. Updating...
+The audit_control file has been updated with the specified flags.
+Section 3.3 - Ensure install.log Is Retained for 365 or More Days and No Maximum Size
+Section 3.4 - Ensure Security Auditing Retention Is Enabled
+Not privileged to stop service.
+Section 3.5 - Ensure Access to Audit Records Is Controlled
+Section 3.6 - Audit Software Inventory (Manually Check)
+Section 4 - Network Configurations
+Section 4.1 - Ensure Bonjour Advertising Services Is Disabled
+Section 4.2 - Ensure HTTP Server Is Disabled (Skipped)
+Section 4.3 - Ensure NFS Server Is Disabled (Skipped)
+Section 5 - System Access, Authentication and Authorization
+Section 5.1 - File System Permissions and Access Controls
+Section 5.1.1 - Ensure Home Folders Are Secure (Skipped)
+Section 5.1.2 - Ensure System Integrity Protection Status (SIP) Is Enabled (Manually Check)
+Section 5.1.3 - Ensure Apple Mobile File Integrity (AMFI) Is Enabled (Manually Check)
+Section 5.1.4 - Ensure Signed System Volume (SSV) Is Enabled (Manually Check)
+Section 5.1.5 - Ensure Appropriate Permissions Are Enabled for System Wide Applications
+Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)
+Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder (Skipped)
+Section 5.2 - Password Management
+Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured
+Section 5.2.2 - Ensure Password Minimum Length Is Configured
+Section 5.2.3 - Ensure Complex Password Must Contain Alphabetic Characters Is Configured (Skipped)
+Section 5.2.4 - Ensure Complex Password Must Contain Numeric Character Is Configured (Skipped)
+Section 5.2.5 - Ensure Complex Password Must Contain Special Character Is Configured (Skipped)
+Section 5.2.6 - Ensure Complex Password Must Contain Uppercase and Lowercase Characters Is Configured (Skipped)
+Section 5.2.7 - Ensure Password Age Is Configured (Skipped)
+Section 5.2.8 - Ensure Password History Is Configured (Skipped)
+Section 5.3 - Encryption
+Section 5.3.1 - Ensure all user storage APFS volumes are encrypted (Manually Check)
+Section 5.3.2 - Ensure all user storage CoreStorage volumes are encrypted  (Manually Check)
+Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero (Manually Check)
+Section 5.5 - Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)
+Section 5.6 - Ensure the 'root' Account Is Disabled (Skipped)
+Section 5.7 - Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session
+YES (0)
+Section 5.8 - Ensure a Login Window Banner Exists (Skipped)
+Section 5.9 - Ensure the Guest Home Folder Does Not Exist
+Guest home folder does not exist.
+Section 5.10 - Ensure XProtect Is Running and Updated
+softwareupdate[2002]: Triggering a background check with forced scan (critical and config-data updates only) ...
+Section 5.11 - Ensure Logging Is Enabled for Sudo
+Defaults log_output
+/etc/sudoers: parsed OK
+Section 6 - Applications
+Section 6.1 - Finder
+Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled
+2025-03-18 14:04:03.046 defaults[2013:24058] 
+Rep argument is not a dictionary
+Defaults have not been changed.
+Section 6.2 - Mail
+Section 6.2.1 - Ensure Protect Mail Activity in Mail Is Enabled (Manually Check)
+Section 6.3 - Safari
+Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled (Skipped)
+Section 6.3.2 - Audit History and Remove History Items
+Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
+Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled (Skipped)
+Section 6.3.5 - Audit Hide IP Address in Safari Setting (Skipped)
+Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled
+No matching processes were found
+Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled
+No matching processes were found
+Section 6.3.8 - Audit AutoFill (Skipped)
+Section 6.3.9 - Audit Pop-up Windows (Skipped)
+Section 6.3.10 - Ensure Show Status Bar Is Enabled
+Section 6.4 - Terminal
+Section 6.4.1 - Ensure Secure Keyboard Entry Terminal.app Is Enabled
+Section 7 - Supplemental
+Section 7.1 CIS Apple macOS Benchmark development collaboration with mSCP (Skipped)
+Section 7.2 - Apple Push Notification Service (APNs) (Skipped)
+Section 7.3 - Mobile Configuration Profiles (Skipped)
+All CIS Policies have been applied, and this is the end of the script.
+administrator@MacBook-Pro ~ % 
