@@ -276,12 +276,12 @@ echo "Section 2 - System Settings"
     # 2.10 Lock Screen
     echo "Section 2.10 - Lock Screen"
         # 2.10.1 Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled
-        echo "Section 2.10.1 - Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled"
-            sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
+        echo "Section 2.10.1 - Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled (Skipped)"
+            # sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
-        echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
-            sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
+        echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately (Skipped)"
+            #sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
+            #sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
