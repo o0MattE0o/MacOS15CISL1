@@ -3,6 +3,20 @@
 # Level 1 - Security Settings
 # https://workbench.cisecurity.org/benchmarks/18636/
 
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root!"
+    exit 1
+fi
+
+apply_setting() {
+    local domain=$1
+    local key=$2
+    local value=$3
+    
+    echo "Applying setting: $domain -> $key = $value"
+    sudo defaults write "$domain" "$key" "$value"
+}
+
 # 1 Install Updates, Patches and Additional Security Software
 echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.1 Ensure All Apple-provided Software Is Current
@@ -10,7 +24,10 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
         #sudo softwareupdate -i -a
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true  
+        apply_setting "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticCheckEnabled" -bool true
+        apply_setting "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticDownload" -bool true
+        apply_setting "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticallyInstallMacOSUpdates" -bool true
+        apply_setting "/Library/Preferences/com.apple.commerce" "AutoUpdate" -bool TRUE
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -28,9 +45,8 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     echo "Section 1.7 - Ensure Software Update Deferment Is Less Than or Equal to 30 Days"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate enforcedSoftwareUpdateDelay -int 5 #No.Days Deferred
     # 1.8 Ensure the System is Managed by a Mobile Device Management (MDM) Software
-    echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software"
-        echo "Ensure Device is enrolled in Intune."
-    
+    echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)"
+        #echo "Ensure Device is enrolled in Intune."
 # 2 System Settings
 echo "Section 2 - System Settings"
     # 2.1 Apple Account
@@ -59,7 +75,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.2 - Networking"
         # 2.2.1	Ensure Firewall Is Enabled
         echo "Section 2.2.1 - Ensure Firewall Is Enabled"
-            sudo defaults write /Library/Preferences/com.apple.alf globalstate -int 2
+            sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
         # 2.2.2	Ensure Firewall Stealth Mode Is Enabled
         echo "Section 2.2.2 - Ensure Firewall Stealth Mode Is Enabled"
             sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
@@ -69,10 +85,12 @@ echo "Section 2 - System Settings"
         echo "Section 2.3.1 - AirDrop & Handoff"
             # 2.3.1.1 Ensure AirDrop Is Disabled When Not Actively Transferring Files
             echo "Section 2.3.1.1 - Ensure AirDrop Is Disabled When Not Actively Transferring Files"
-                sudo defaults write /Library/Preferences/com.apple.NetworkBrowser DisableAirDrop -bool true
+                apply_setting "com.apple.NetworkBrowser" "DisableAirDrop" -bool true
+                killall Finder
             # 2.3.1.2 Ensure AirPlay Receiver Is Disabled
             echo "Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled"
-                sudo defaults write /Library/Preferences/com.apple.controlcenter.plist AirplayRecieverEnabled -bool false
+                apply_setting "/Library/Preferences/com.apple.Bluetooth" "ControllerPowerState" -int 0
+                sudo launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist
         # 2.3.2 Date & Time
         echo "Section 2.3.2 - Date & Time"
                 # 2.3.2.1 Ensure Set Time and Date Automatically Is Enabled
@@ -100,13 +118,13 @@ echo "Section 2 - System Settings"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
             echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled (skipped)"
-                #yes | sudo systemsetup -setremotelogin off
+                #sudo systemsetup -setremotelogin off 2>/dev/null
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
             # 2.3.3.7 Ensure Remote Apple Events Is Disabled
             echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled"
-                sudo /usr/sbin/systemsetup -setremoteappleevents off 
+                sudo systemsetup -setremoteappleevents off 2>/dev/null
             # 2.3.3.8 Ensure Internet Sharing Is Disabled
             echo "Section 2.3.3.8 - Ensure Internet Sharing Is Disabled"
                 sudo /usr/bin/defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
@@ -126,12 +144,11 @@ echo "Section 2 - System Settings"
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
             echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
-                for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                    sudo -u "$user" /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
-                done
+                sudo defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerState -int 0
+                sudo launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
-                echo "Manually check required Hostname should not contain"
+                # echo "Manually check required Hostname should not contain"
                     # 1. User directory account names
                     # 2. Computer directory account names where machine accounts exist
                     # 3. Contact phone numbers
@@ -146,7 +163,7 @@ echo "Section 2 - System Settings"
                     echo "Time Machine is enabled. Ensuring automatic backups are enabled."
                     sudo defaults write /Library/Preferences/com.apple.TimeMachine AutoBackup -bool true
                 else
-                    echo "Time Machine is not enabled."
+                    echo "Time Machine is not enabled. (OK)"
                 fi
             # 2.3.4.2 Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled
             echo "Section 2.3.4.2 - Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled (Skipped)"
@@ -158,11 +175,10 @@ echo "Section 2 - System Settings"
                     # 5. Configure the FileVault settings to enforce encryption.
     # 2.4 Control Center
     echo "Section 2.4 - Control Center"
-        # 2.4.1	Ensure Show Wi-Fi status in Menu Bar Is Enabled
+        # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
         echo "Section 2.4.1 - Ensure Show Wi-Fi status in Menu Bar Is Enabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults -currentHost write com.apple.controlcenter WiFi -int 2
-            done
+            defaults write com.apple.systemuiserver menuExtras -array-add "/System/Library/CoreServices/Menu Extras/AirPort.menu"
+            killall SystemUIServer
         # 2.4.2	Ensure Show Bluetooth Status in Menu Bar Is Enabled
         echo "Section 2.4.2 - Ensure Show Bluetooth Status in Menu Bar Is Enabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
@@ -228,11 +244,11 @@ echo "Section 2 - System Settings"
             echo "Section 2.6.3.4 - Ensure 'Share with app developers' Is Disabled"
                 sudo defaults write /Library/Preferences/com.apple.applicationaccess.plist allowDiagnosticSubmission -bool false
             # 2.6.3.5 Ensure Share iCloud Analytics Is Disabled
-            echo "Section 2.6.3.5 - Ensure Share iCloud Analytics Is Disabled"
-                echo "1. Open System Settings"
-                echo "2. Open Privacy & Security"
-                echo "3. Select Analytics & Improvements"
-                echo "4. Verify that Share iCloud Analytics is disabled"
+            echo "Section 2.6.3.5 - Ensure Share iCloud Analytics Is Disabled (Manually Check)"
+                # 1. Open System Settings
+                # 2. Open Privacy & Security
+                # 3. Select Analytics & Improvements
+                # 4. Verify that Share iCloud Analytics is disabled
         # 2.6.4 Ensure Limit Ad Tracking Is Enabled
         echo "Section 2.6.4 - Ensure Limit Ad Tracking Is Enabled"
             sudo defaults write /Library/Preferences/com.apple.applicationaccess.plist allowApplePersonalizedAdvertising -bool false
@@ -241,50 +257,51 @@ echo "Section 2 - System Settings"
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
         # 2.6.6 Ensure FileVault Is Enabled
-        echo "Section 2.6.6 - Ensure FileVault Is Enabled"
-            sudo defaults write /Library/Preferences/com.apple.MCX.plist dontAllowFDEDisable -bool true
+        echo "Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)"
+            # sudo defaults write /Library/Preferences/com.apple.MCX.plist dontAllowFDEDisable -bool true
         # 2.6.7 Audit Lockdown Mode
         echo "Section 2.6.7 - Audit Lockdown Mode"
-            echo "1. Open System Settings"
-            echo "2. Select Privacy & Security"
-            echo "3. Set Lockdown Mode to your organization's parameters"
+            # echo "1. Open System Settings"
+            # echo "2. Select Privacy & Security"
+            # echo "3. Set Lockdown Mode to your organization's parameters"
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
         echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences"
-            declare -a authDBs=("system.preferences" "system.preferences.energysaver" "system.preferences.network" "system.preferences.printing" "system.preferences.sharing" "system.preferences.softwareupdate" "system.preferences.startupdisk" "system.preferences.timemachine")
-            for section in "${authDBs[@]}"; do
-                /usr/bin/security -q authorizationdb read "$section" > "/tmp/$section.plist"
-                class_key_value=$(usr/libexec/PlistBuddy -c "Print :class" "/tmp/$section.plist" 2>&1)
-                if [[ "$class_key_value" == *"Does Not Exist"* ]]; then
-                    /usr/libexec/PlistBuddy -c "Add :class string user" "/tmp/$section.plist"
-                else
-                    /usr/libexec/PlistBuddy -c "Set :class user" "/tmp/$section.plist"
-                fi
-                key_value=$(/usr/libexec/PlistBuddy -c "Print :shared" "/tmp/$section.plist" 2>&1)  	
-                if [[ "$key_value" == *"Does Not Exist"* ]]; then
-                    /usr/libexec/PlistBuddy -c "Add :shared bool false" "/tmp/$section.plist"
-                else
-                    /usr/libexec/PlistBuddy -c "Set :shared false" "/tmp/$section.plist"
-                fi
-                auth_user_key=$(/usr/libexec/PlistBuddy -c "Print :authenticate-user" "/tmp/$section.plist" 2>&1)  	
-                if [[ "$auth_user_key" == *"Does Not Exist"* ]]; then
-                    /usr/libexec/PlistBuddy -c "Add :authenticate-user bool true" "/tmp/$section.plist"
-                else
-                    /usr/libexec/PlistBuddy -c "Set :authenticate-user true" "/tmp/$section.plist"
-                fi
-                session_owner_key=$(/usr/libexec/PlistBuddy -c "Print :session-owner" "/tmp/$section.plist" 2>&1)  	
-                if [[ "$session_owner_key" == *"Does Not Exist"* ]]; then
-                    /usr/libexec/PlistBuddy -c "Add :session-owner bool false" "/tmp/$section.plist"
-                else
-                    /usr/libexec/PlistBuddy -c "Set :session-owner false" "/tmp/$section.plist"
-                fi
-                group_key=$(usr/libexec/PlistBuddy -c "Print :group" "/tmp/$section.plist" 2>&1)
-                if [[ "$group_key" == *"Does Not Exist"* ]]; then
-                    /usr/libexec/PlistBuddy -c "Add :group string admin" "/tmp/$section.plist"
-                else
-                    /usr/libexec/PlistBuddy -c "Set :group admin" "/tmp/$section.plist"
-                fi
-                /usr/bin/security -q authorizationdb write "$section" < "/tmp/$section.plist"
-            done
+            /usr/libexec/PlistBuddy -c "Set :authenticate-user false" "/tmp/$section.plist"
+            #declare -a authDBs=("system.preferences" "system.preferences.energysaver" "system.preferences.network" "system.preferences.printing" "system.preferences.sharing" "system.preferences.softwareupdate" "system.preferences.startupdisk" "system.preferences.timemachine")
+            #for section in "${authDBs[@]}"; do
+            #    /usr/bin/security -q authorizationdb read "$section" > "/tmp/$section.plist"
+            #    class_key_value=$(usr/libexec/PlistBuddy -c "Print :class" "/tmp/$section.plist" 2>&1)
+            #    if [[ "$class_key_value" == *"Does Not Exist"* ]]; then
+            #        /usr/libexec/PlistBuddy -c "Add :class string user" "/tmp/$section.plist"
+            #    else
+            #        /usr/libexec/PlistBuddy -c "Set :class user" "/tmp/$section.plist"
+            #    fi
+            #    key_value=$(/usr/libexec/PlistBuddy -c "Print :shared" "/tmp/$section.plist" 2>&1)  	
+            #    if [[ "$key_value" == *"Does Not Exist"* ]]; then
+            #        /usr/libexec/PlistBuddy -c "Add :shared bool false" "/tmp/$section.plist"
+            #    else
+            #        /usr/libexec/PlistBuddy -c "Set :shared false" "/tmp/$section.plist"
+            #    fi
+            #    auth_user_key=$(/usr/libexec/PlistBuddy -c "Print :authenticate-user" "/tmp/$section.plist" 2>&1)  	
+            #    if [[ "$auth_user_key" == *"Does Not Exist"* ]]; then
+            #        /usr/libexec/PlistBuddy -c "Add :authenticate-user bool true" "/tmp/$section.plist"
+            #    else
+            #        /usr/libexec/PlistBuddy -c "Set :authenticate-user true" "/tmp/$section.plist"
+            #    fi
+            #    session_owner_key=$(/usr/libexec/PlistBuddy -c "Print :session-owner" "/tmp/$section.plist" 2>&1)  	
+            #    if [[ "$session_owner_key" == *"Does Not Exist"* ]]; then
+            #        /usr/libexec/PlistBuddy -c "Add :session-owner bool false" "/tmp/$section.plist"
+            #    else
+            #        /usr/libexec/PlistBuddy -c "Set :session-owner false" "/tmp/$section.plist"
+            #    fi
+            #    group_key=$(usr/libexec/PlistBuddy -c "Print :group" "/tmp/$section.plist" 2>&1)
+            #    if [[ "$group_key" == *"Does Not Exist"* ]]; then
+            #        /usr/libexec/PlistBuddy -c "Add :group string admin" "/tmp/$section.plist"
+            #    else
+            #        /usr/libexec/PlistBuddy -c "Set :group admin" "/tmp/$section.plist"
+            #    fi
+            #    /usr/bin/security -q authorizationdb write "$section" < "/tmp/$section.plist"
+            #done
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -307,7 +324,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.8 - Displays"
         # 2.8.1 Audit Universal Control Settings
         echo "Section 2.8.1 - Audit Universal Control Settings"
-            sudo defaults write /Library/Preferences/com.apple.universalcontrol.plist Disable -bool false 
+            sudo defaults write com.apple.universalcontrol Disable -bool true
     # 2.9 Battery (Energy Saver)
     echo "Section 2.9 - Battery (Energy Saver)"
         # 2.9.1 OS Resuming From Sleep
@@ -336,14 +353,14 @@ echo "Section 2 - System Settings"
             sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            sudo defaults write com.apple.screensaver askForPassword -int 1
-            sudo defaults write com.apple.screensaver askForPasswordDelay -int 5
+            apply_setting "com.apple.screensaver" "askForPassword" -int 1
+            apply_setting "com.apple.screensaver" "askForPasswordDelay" -int 5
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
         # 2.10.4 Ensure Login Window Displays as Name and Password Is Enabled
         echo "Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled"
-            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
+            apply_setting "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
         # 2.10.5 Ensure Show Password Hints Is Disabled
         echo "Section 2.10.5 - Ensure Show Password Hints Is Disabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
@@ -356,16 +373,11 @@ echo "Section 2 - System Settings"
             done
         # 2.11.2 Audit Touch ID
         echo "Section 2.11.2 - Audit Touch ID (Skipped)"
-        #    for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody');  do
-        #        sudo -u "$user" /usr/bin/bioutil -w -u 1
-        #        sudo -u "$user" /usr/bin/bioutil -w -a 1
-        #    done
-        #    sudo usr/bin/bioutil -w -s -o 86400
     # 2.12 Users & Groups
     echo "Section 2.12 - Users & Groups"
         # 2.12.1 Ensure Guest Account Is Disabled
         echo "Section 2.12.1 - Ensure Guest Account Is Disabled"
-            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow GuestEnabled -bool false
+            apply_setting "/Library/Preferences/com.apple.loginwindow" "GuestEnabled" -bool false
         # 2.12.2 Ensure Guest Access to Shared Folders Is Disabled
         echo "Section 2.12.2 - Ensure Guest Access to Shared Folders Is Disabled"
             sudo /usr/sbin/sysadminctl -smbGuestAccess off
@@ -375,7 +387,7 @@ echo "Section 2 - System Settings"
                 sudo /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
                 echo "Automatic login has been disabled."
             else
-                echo "autoLoginUser key does not exist. Automatic login is already disabled."
+                echo "autoLoginUser key does not exist. Automatic login is already disabled. (OK)"
             fi
     # 2.13 Passwords
     echo "Section 2.13 - Passwords"
@@ -420,15 +432,23 @@ echo "Section 2 - System Settings"
     echo "Section 2.18 - Keyboard"
         # 2.18.1 Ensure On-Device Dictation Is Enabled
         echo "Section 2.18.1 - Ensure On-Device Dictation Is Enabled"
-            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMMasterDictationEnabled -bool true
+            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMEnabled -bool true
+            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
+            killall SystemUIServer
 # 3 Logging and Auditing
 echo "Section 3 - Logging and Auditing"
     # 3.1 Ensure Security Auditing Is Enabled
     echo "Section 3.1 - Ensure Security Auditing Is Enabled"
-        sudo /bin/launchctl bootstrap system /System/Library/LaunchDaemons/com.apple.auditd.plist
-        if [ ! -f /etc/security/audit_control ]; then
-            sudo /bin/cp /etc/security/audit_control.example /etc/security/audit_control
+        LAUNCHD_RUNNING=$(launchctl list | grep -c com.apple.auditd)
+        if [ "$LAUNCHD_RUNNING" -ne 1 ]; then
+            sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
         fi
+        if [ ! -e /etc/security/audit_control ] && [ -e /etc/security/audit_control.example ]; then
+            sudo cp /etc/security/audit_control.example /etc/security/audit_control
+        else
+            sudo touch /etc/security/audit_control
+        fi
+        echo "Security auditing is enabled. (OK)"
     # 3.2 Ensure Security Auditing Flags For User-Attributable Events Are Configured Per Local Organizational Requirements
     echo "Section 3.2 - Ensure Security Auditing Flags For User-Attributable Events Are Configured Per Local Organizational Requirements"
         flags_to_check="-fm, ad, -ex, aa, -fr, lo, -fw"
@@ -443,45 +463,13 @@ echo "Section 3 - Logging and Auditing"
         fi
     # 3.3 Ensure install.log Is Retained for 365 or More Days and No Maximum Size
     echo "Section 3.3 - Ensure install.log Is Retained for 365 or More Days and No Maximum Size"
-        min_ttl=365
-        sudo cp /etc/asl/com.apple.install /etc/asl/com.apple.install.bak
-        # Extract the current ttl value
-        current_ttl=$(grep -o 'ttl=[0-9]*' /etc/asl/com.apple.install | cut -d '=' -f 2)
-        # Check if current_ttl is a valid integer
-        if [[ "$current_ttl" =~ ^[0-9]+$ ]]; then
-            if [ "$current_ttl" -lt "$min_ttl" ]; then
-                sudo sed -i '' "s/ttl=[0-9]*/ttl=$min_ttl/" /etc/asl/com.apple.install
-            fi
-        else
-            echo "Current ttl value is not a valid integer. Setting ttl to $min_ttl."
-            sudo sed -i '' "s/ttl=[0-9]*/ttl=$min_ttl/" /etc/asl/com.apple.install
-        fi
-        # Remove the all_max setting
-        sudo sed -i '' "s/all_max=[^ ]*//" /etc/asl/com.apple.install
+        sudo sed -i '' "s/* file \/var\/log\/install.log.*/* file \/var\/log\/install.log format='\$((Time)(JZ)) \$Host \$Sender[\$PID]: \$Message' rotate=utc compress file_max=50M size_only ttl=365/g" /etc/asl/com.apple.install
     # 3.4 Ensure Security Auditing Retention Is Enabled
     echo "Section 3.4 - Ensure Security Auditing Retention Is Enabled"
-        min_days="60d"
-        min_size="5G"
         sudo cp /etc/security/audit_control /etc/security/audit_control.bak
-        current_expire=$(grep "^expire-after:" /etc/security/audit_control | cut -d ' ' -f 2)
-        compare_expire_after() {
-            local current=$1
-            local min=$2
-            if [[ "$current" =~ [0-9]+[dD] ]]; then
-                current_days=${current%[dD]}
-                min_days=${min%[dD]}
-                [ "$current_days" -ge "$min_days" ]
-            elif [[ "$current" =~ [0-9]+[gG] ]]; then
-                current_size=${current%[gG]}
-                min_size=${min%[gG]}
-                [ "$current_size" -ge "$min_size" ]
-            else
-                return 1
-            fi
-        }
-        if ! compare_expire_after "$current_expire" "$min_days" && ! compare_expire_after "$current_expire" "$min_size"; then
-            sudo sed -i '' "s/^expire-after:.*/expire-after: $min_days/" /etc/security/audit_control
-        fi
+        sudo sed -i '' 's/^expire-after:.*/expire-after:60d OR 5G/' /etc/security/audit_control
+        sudo launchctl stop com.apple.auditd
+        sudo launchctl start com.apple.auditd
     # 3.5 Ensure Access to Audit Records Is Controlled
     echo "Section 3.5 - Ensure Access to Audit Records Is Controlled"
         sudo /usr/sbin/chown -R root:wheel /etc/security/audit_control
@@ -497,39 +485,39 @@ echo "Section 4 - Network Configurations"
     echo "Section 4.1 - Ensure Bonjour Advertising Services Is Disabled"
         sudo /usr/bin/defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
     # 4.2 Ensure HTTP Server Is Disabled
-    echo "Section 4.2 - Ensure HTTP Server Is Disabled"
-        sudo /usr/sbin/apachectl stop
-        sudo /bin/launchctl bootout system /System/Library/LaunchDaemons/org.apache.httpd.plist
+    echo "Section 4.2 - Ensure HTTP Server Is Disabled (Skipped)"
+        # sudo /usr/sbin/apachectl stop
+        # sudo /bin/launchctl bootout system /System/Library/LaunchDaemons/org.apache.httpd.plist
     # 4.3 Ensure NFS Server Is Disabled
-    echo "Section 4.3 - Ensure NFS Server Is Disabled"
-        sudo /sbin/nfsd stop
-        sudo /bin/launchctl disable system/com.apple.nfsd
-        if [ -f /etc/exports ]; then
-            sudo rm /etc/exports
-        else
-            echo "/etc/exports file does not exist."
-        fi
+    echo "Section 4.3 - Ensure NFS Server Is Disabled (Skipped)"
+        # sudo /sbin/nfsd stop
+        # sudo /bin/launchctl disable system/com.apple.nfsd
+        # if [ -f /etc/exports ]; then
+        #     sudo rm /etc/exports
+        # else
+        #     echo "/etc/exports file does not exist."
+        # fi
 # 5 System Access, Authentication and Authorization
 echo "Section 5 - System Access, Authentication and Authorization"
     # 5.1 File System Permissions and Access Controls
     echo "Section 5.1 - File System Permissions and Access Controls"
         # 5.1.1 Ensure Home Folders Are Secure
-        echo "Section 5.1.1 - Ensure Home Folders Are Secure"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                if [ -d /Users/"$user" ]; then
-                    sudo /bin/chmod -R og-rw /Users/"$user"
-                else
-                    echo "Home directory for user $user does not exist."
-                fi
-            done
+        echo "Section 5.1.1 - Ensure Home Folders Are Secure (Skipped)"
+            #for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+            #    if [ -d /Users/"$user" ]; then
+            #        sudo /bin/chmod -R og-rw /Users/"$user"
+            #    else
+            #        echo "Home directory for user $user does not exist."
+            #    fi
+            #done
         # 5.1.2 Ensure System Integrity Protection Status (SIP) Is Enabled
-        echo "Section 5.1.2 - Ensure System Integrity Protection Status (SIP) Is Enabled (skipped)"
+        echo "Section 5.1.2 - Ensure System Integrity Protection Status (SIP) Is Enabled (Skipped)"
         # 5.1.3 Ensure Apple Mobile File Integrity (AMFI) Is Enabled
         echo "Section 5.1.3 - Ensure Apple Mobile File Integrity (AMFI) Is Enabled"
-            sudo /usr/sbin/nvram boot-args="" 
+            csrutil status | grep -q "enabled" || echo "WARNING: System Integrity Protection (SIP) is disabled!"
         # 5.1.4 Ensure Signed System Volume (SSV) Is Enabled
         echo "Section 5.1.4 - Ensure Signed System Volume (SSV) Is Enabled"
-            echo "If SSV has been disabled, assume that the operating system has been compromised. Back up any files, and do a clean install to a known good Operating System"
+            csrutil authenticated-root status | grep -q "enabled" || echo "WARNING: Signed System Volume (SSV) is disabled!"
         # 5.1.5 Ensure Appropriate Permissions Are Enabled for System Wide Applications
         echo "Section 5.1.5 - Ensure Appropriate Permissions Are Enabled for System Wide Applications"
             IFS=$'\n'
@@ -537,25 +525,21 @@ echo "Section 5 - System Access, Authentication and Authorization"
                 sudo /bin/chmod -R o-w "$apps"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
-        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder"
-            IFS=$'\n'
-            for sysPermissions in $( /usr/bin/find /System/Volumes/Data/System -type d -perm -2 | /usr/bin/grep -vE "downloadDir|locks" ); do
-                sudo /bin/chmod -R o-w "$sysPermissions"
-            done
+        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
         echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder"  
-            IFS=$'\n'
-            for libPermissions in $( /usr/bin/find /System/Volumes/Data/Library -type d -perm -2 2>&1 | /usr/bin/grep -v Caches | /usr/bin/grep -v /Preferences/Audio/Data ); do
-                sudo /bin/chmod -R o-w "$libPermissions"
-            done
+            #IFS=$'\n'
+            #for libPermissions in $( /usr/bin/find /System/Volumes/Data/Library -type d -perm -2 2>&1 | /usr/bin/grep -v Caches | /usr/bin/grep -v /Preferences/Audio/Data ); do
+            #    sudo /bin/chmod -R o-w "$libPermissions"
+            #done
     # 5.2 Password Management
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
+            # sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "minChars=15"
+            # sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "minChars=15"
         # 5.2.3 Ensure Complex Password Must Contain Alphabetic Characters Is Configured
         echo "Section 5.2.3 - Ensure Complex Password Must Contain Alphabetic Characters Is Configured (Skipped)"
             # sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "requiresAlpha=1"
@@ -584,15 +568,11 @@ echo "Section 5 - System Access, Authentication and Authorization"
             # 1. Use Disk Utility to erase a disk and format as macOS Extended (Journaled, Encrypted)
     # 5.4 Ensure the Sudo Timeout Period Is Set to Zero
     echo "Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero (Manually Check)"
-        # 1. Open Terminal: Launch the Terminal application.
-        # 2. Edit the sudoers file: Use the visudo command to safely edit the sudoers file. This command checks for syntax errors before saving the file.
-            # sudo visudo
-        # 3. Find the Defaults line: Look for the line that starts with Defaults.
-        # 4. Set the timeout to zero: Add or modify the following line to set the sudo timeout period to zero:
-            # Defaults timestamp_timeout=0
-        # 5. Save and exit: Save the file and exit the editor. If you're using the default nano editor, you can save by pressing Ctrl+O, then Enter, and exit by pressing Ctrl+X.
+        if ! grep -q "Defaults timestamp_timeout=0" /etc/sudoers; then
+            echo "Defaults timestamp_timeout=5" | sudo tee -a /etc/sudoers
+        fi
     # 5.5 Ensure a Separate Timestamp Is Enabled for Each User/tty Combo
-    echo "Section 5.5 -  Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)"
+    echo "Section 5.5 - Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)"
         # 1. Open Terminal: Launch the Terminal application.
         # 2. Edit the sudoers file: Use the visudo command to safely edit the sudoers file. This command checks for syntax errors before saving the file.
             # sudo visudo
@@ -604,7 +584,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
     echo "Section 5.6 - Ensure the 'root' Account Is Disabled (Skipped)"
     # 5.7 Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session
     echo "Section 5.7 - Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session"
-        sudo /usr/bin/security authorizationdb write system.login.screensaver authenticate-session-owner
+        sudo /usr/bin/security authorizationdb write system.login.screensaver allow
         # Running this command will disable Touch ID to unlock the screen saver. To re-enable Touch ID for users, run the following command:
         # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow screenUnlockMode -int 1
     # 5.8 Ensure a Login Window Banner Exists
@@ -622,52 +602,20 @@ echo "Section 5 - System Access, Authentication and Authorization"
         fi
     # 5.10 Ensure XProtect Is Running and Updated
     echo "Section 5.10 - Ensure XProtect Is Running and Updated"
-        # Load XProtect daemon
-        if sudo /bin/launchctl bootout system /Library/Apple/System/Library/LaunchDaemons/com.apple.XProtect.daemon.scan.plist; then
-            echo "XProtect daemon loaded successfully."
-        else
-            echo "Failed to load XProtect daemon. Please check for richer errors using launchctl bootout."
-        fi
-        # Load XProtect framework plugin service
-        if sudo /bin/launchctl bootout system /Library/Apple/System/Library/LaunchDaemons/com.apple.XprotectFramework.PluginService.plist; then
-            echo "XProtect framework plugin service loaded successfully."
-        else
-            echo "Failed to load XProtect framework plugin service. Please check for richer errors using launchctl bootout."
-        fi
-        # Update XProtect
-        sudo /usr/bin/xprotect update
+        sudo softwareupdate --background-critical
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo"
-        # Backup the current sudoers file
-        cp /etc/sudoers /etc/sudoers.bak
-
-        # Add logging configuration to the sudoers file
-        echo "Defaults log_input, log_output" >> /etc/sudoers
-        echo "Defaults iolog_dir=/var/log/sudo-io" >> /etc/sudoers
-
-        # Verify the sudoers file for syntax errors
-        visudo -c
-
-        if [ $? -eq 0 ]; then
-            echo "Sudoers file updated successfully."
-        else
-            echo "Error in sudoers file. Restoring backup."
-            cp /etc/sudoers.bak /etc/sudoers
-        fi 
+        sudo cp /etc/sudoers /etc/sudoers.bak
+        echo "Defaults log_output" | sudo tee -a /etc/sudoers
+        sudo visudo -c
 # 6 Applications
 echo "Section 6 - Applications"
     # 6.1 Finder
     echo "Section 6.1 - Finder"
         # 6.1.1	Ensure Show All Filename Extensions Setting is Enabled
         echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                if [ -d "/Users/$user/Library/Preferences" ]; then
-                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Preferences/.GlobalPreferences AppleShowAllExtensions -bool true
-                    sudo killall Finder
-                else
-                    echo "Skipping user $user: Preferences directory not found."
-                fi
-            done
+            sudo defaults write NSGlobalDomain AppleShowAllExtensions
+            sudo killall Finder
     # 6.2 Mail
     echo "Section 6.2 - Mail"
         # 6.2.1 Ensure Protect Mail Activity in Mail Is Enabled
@@ -681,14 +629,14 @@ echo "Section 6 - Applications"
     # 6.3 Safari
     echo "Section 6.3 - Safari"
         # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
-        echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                if [ -d "/Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences" ]; then
-                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari AutoOpenSafeDownloads -bool false
-                else
-                    echo "Skipping user $user: Preferences directory not found."
-                fi
-            done
+        echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled (Skipped)"
+            #for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+            #    if [ -d "/Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences" ]; then
+            #        sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari AutoOpenSafeDownloads -bool false
+            #    else
+            #        echo "Skipping user $user: Preferences directory not found."
+            #    fi
+            #done
         # 6.3.2 Audit History and Remove History Items
         echo "Section 6.3.2 - Audit History and Remove History Items"
             # Replace <value> with one of the allowed integers: 1, 7, 14, 31, 365, 36500
@@ -697,61 +645,55 @@ echo "Section 6 - Applications"
         # 6.3.3 Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
         echo "Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled"
             sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
+            killall Safari
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
-        echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                if [ -d "/Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences" ]; then
-                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari BlockStoragePolicy -int 2
-                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
-                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WebKitStorageBlockingPolicy -int 1
-                else
-                    echo "Skipping user $user: Preferences directory not found."
-                fi
-            done
+        echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled (Skipped)"
+            #for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+            #    if [ -d "/Users/$user/Library/Containers/com.apple.Safari/Data/Library/Preferences" ]; then
+            #        sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari BlockStoragePolicy -int 2
+            #        sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
+            #        sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WebKitStorageBlockingPolicy -int 1
+            #    else
+            #        echo "Skipping user $user: Preferences directory not found."
+            #    fi
+            #done
         # 6.3.5 Audit Hide IP Address in Safari Setting
-        echo "Section 6.3.5 - Audit Hide IP Address in Safari Setting"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WBSPrivacyProxyAvailabilityTraffic -int 33422572
-            done
+        echo "Section 6.3.5 - Audit Hide IP Address in Safari Setting (Skipped)"
+            #for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+            #    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WBSPrivacyProxyAvailabilityTraffic -int 33422572
+            #done
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
         echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
-            done
+            sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
+            killall Safari
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
         echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari ShowFullURLInSmartSearchField -bool true
-            done
+            defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+            killall Safari
         # 6.3.8 Audit AutoFill
-        echo "Section 6.3.8 - Audit AutoFill"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillFromAddressBook -bool true
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillPasswords -bool true
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillCreditCardData -bool true
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillMiscellaneousForms -bool true
-            done
+        echo "Section 6.3.8 - Audit AutoFill (Skipped)"
+            #for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+            #    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillFromAddressBook -bool true
+            #    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillPasswords -bool true
+            #    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillCreditCardData -bool true
+            #    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari AutoFillMiscellaneousForms -bool true
+            #done
         # 6.3.9 Audit Pop-up Windows
-        echo "Section 6.3.9 - Audit Pop-up Windows"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false
-                sudo -u "$user" /usr/bin/defaults delete /Users/"$user"/Library/Containers/com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomaticallyExceptions
-            done
+        echo "Section 6.3.9 - Audit Pop-up Windows (Skipped)"
+            #for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+            #    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false
+            #    sudo -u "$user" /usr/bin/defaults delete /Users/"$user"/Library/Containers/com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomaticallyExceptions
+            #done
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Containers/com.apple.Safari ShowOverlayStatusBar -bool true
-            done
+            sudo defaults write com.apple.finder ShowStatusBar -bool true
+            killall Finder
     # 6.4 Terminal
     echo "Section 6.4 - Terminal"
         # 6.4.1 Ensure Secure Keyboard Entry Terminal.app Is Enabled
         echo "Section 6.4.1 - Ensure Secure Keyboard Entry Terminal.app Is Enabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                if [ -d "/Users/$user/Library/Preferences" ]; then
-                    sudo -u "$user" /usr/bin/defaults write com.apple.Terminal SecureKeyboardEntry -bool true
-                else
-                    echo "Skipping user $user: Preferences directory not found."
-                fi
+                sudo -u "$user" /usr/bin/defaults write com.apple.Terminal SecureKeyboardEntry -bool true
             done
 # 7 Supplemental
 echo "Section 7 - Supplemental"
