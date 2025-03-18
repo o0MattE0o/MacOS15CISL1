@@ -1,3 +1,8 @@
+#!/bin/bash
+# CIS Apple macOS 15.0 Sequoia Benchmark v1.0.0
+# Level 1 - Security Settings
+# https://workbench.cisecurity.org/benchmarks/18636/
+
 # 2 System Settings
 echo "Section 2 - System Settings"
     # 2.1 Apple Account
@@ -305,3 +310,8 @@ echo "Section 2 - System Settings"
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMEnabled -bool true
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
             killall SystemUIServer
+
+
+
+echo "All CIS Policies have been applied, and this is the end of the script."
+exit 0
