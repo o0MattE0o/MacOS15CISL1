@@ -1,3 +1,8 @@
+#!/bin/bash
+# CIS Apple macOS 15.0 Sequoia Benchmark v1.0.0
+# Level 1 - Security Settings
+# https://workbench.cisecurity.org/benchmarks/18636/
+
 # 6 Applications
 echo "Section 6 - Applications"
     # 6.1 Finder
@@ -52,3 +57,6 @@ echo "Section 6 - Applications"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
                 sudo -u "$user" /usr/bin/defaults write com.apple.Terminal SecureKeyboardEntry -bool true
             done
+
+echo "All CIS Policies have been applied, and this is the end of the script."
+exit 0
