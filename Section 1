@@ -33,3 +33,6 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.8 Ensure the System is Managed by a Mobile Device Management (MDM) Software
     echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)"
         #echo "Ensure Device is enrolled in Intune."
+
+echo "All CIS Policies have been applied, and this is the end of the script."
+exit 0
