@@ -6,8 +6,8 @@
 # 1 Install Updates, Patches and Additional Security Software
 echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.1 Ensure All Apple-provided Software Is Current
-    echo "Section 1.1 - Ensure All Apple-provided Software Is Current (skipped)"
-        #sudo softwareupdate -i -a
+    echo "Section 1.1 - Ensure All Apple-provided Software Is Current"
+        sudo softwareupdate -i -a
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
         sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticCheckEnabled" -bool true
@@ -103,8 +103,8 @@ echo "Section 2 - System Settings"
             echo "Section 2.3.3.4 - Ensure Printer Sharing Is Disabled"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
-            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled (skipped)"
-                #sudo systemsetup -setremotelogin off 2>/dev/null
+            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
+                sudo systemsetup -setremotelogin off
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
@@ -119,9 +119,9 @@ echo "Section 2 - System Settings"
                 status=$(sudo /usr/bin/AssetCacheManagerUtil status | grep "Active: YES")
                 if [ -n "$status" ]; then
                     sudo /usr/bin/AssetCacheManagerUtil deactivate
-                    echo "Content caching has been deactivated."
+                    echo "     Content caching has been deactivated."
                 else
-                    echo "Content caching is already deactivated."
+                    echo "     Content caching is already deactivated."
                 fi   
             #2.3.3.10 Ensure Media Sharing Is Disabled
             echo "Section 2.3.3.10 - Ensure Media Sharing Is Disabled"
@@ -138,15 +138,17 @@ echo "Section 2 - System Settings"
         echo "Section 2.3.4 - Time Machine"
             # 2.3.4.1 Ensure Backup Automatically is Enabled If Time Machine Is Enabled
             echo "Section 2.3.4.1 - Ensure Backup Automatically is Enabled If Time Machine Is Enabled"
-                tm_status=$(tmutil status | grep -c "Running = 1")
-                if [ "$tm_status" -eq 1 ]; then
-                    echo "Time Machine is enabled. Ensuring automatic backups are enabled."
-                    sudo defaults write /Library/Preferences/com.apple.TimeMachine AutoBackup -bool true
+                status=$(tmutil status | grep -i "Running = 1")
+                if [ -n "$status" ]; then
+                    echo "Time Machine is enabled. Disabling it now..."
+                    sudo tmutil disable
+                    echo "     Time Machine has been disabled."
                 else
-                    echo "Time Machine is not enabled. (OK)"
+                    echo "     Time Machine is already disabled."
                 fi
             # 2.3.4.2 Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled
             echo "Section 2.3.4.2 - Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled (Skipped)"
+                # Skipped
     # 2.4 Control Center
     echo "Section 2.4 - Control Center"
         # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
@@ -185,15 +187,16 @@ echo "Section 2 - System Settings"
                 if sudo /bin/launchctl bootstrap system /System/Library/LaunchDaemons/com.apple.locationd.plist; then
                     sudo /usr/bin/defaults write /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd LocationServicesEnabled -bool true
                     sudo /usr/bin/killall locationd
-                    echo "Location Services have been enabled."
+                    echo "     Location Services have been enabled."
                 else
-                    echo "Failed to load locationd. Please check for richer errors using launchctl bootstrap."
+                    echo "     Failed to load locationd. Please check for richer errors using launchctl bootstrap."
                 fi
             # 2.6.1.2 Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled
             echo "Section 2.6.1.2 - Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled"
                 sudo /usr/bin/defaults write /Library/Preferences/com.apple.locationmenu.plist ShowSystemServices -bool true
             # 2.6.1.3 Audit Location Services Access
             echo "Section 2.6.1.3 - Audit Location Services Access (Skipped)"
+                # Skipped
         # 2.6.2 Full Disk Access
         echo "Section 2.6.2 - Full Disk Access"
             # 2.6.2.1 Audit Full Disk Access for Applications
@@ -223,12 +226,19 @@ echo "Section 2 - System Settings"
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
         # 2.6.6 Ensure FileVault Is Enabled
         echo "Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)"
-            # sudo defaults write /Library/Preferences/com.apple.MCX.plist dontAllowFDEDisable -bool true
+            # Skipped
+            # Should be carried out via Intune Policy
         # 2.6.7 Audit Lockdown Mode
-        echo "Section 2.6.7 - Audit Lockdown Mode (Skipped)"
+        echo "Section 2.6.7 - Audit Lockdown Mode"
+            status=$(defaults read /Library/Preferences/com.apple.security.lockdownmode.plist LockdownModeEnabled)
+            if [ "$status" -eq 1 ]; then
+                echo "     Lockdown Mode is enabled."
+            else
+                echo "     Lockdown Mode is disabled."
+            fi
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
         echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences (Skipped)"
-            # /usr/libexec/PlistBuddy -c "Set :authenticate-user false" "/tmp/$section.plist"
+            # Skipped
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -277,19 +287,24 @@ echo "Section 2 - System Settings"
     echo "Section 2.10 - Lock Screen"
         # 2.10.1 Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled
         echo "Section 2.10.1 - Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled (Skipped)"
+            # Skipped
             # sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately (Skipped)"
+            # Skipped
             #sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
             #sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
-        echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
-            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
+        echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled (skipped)"
+            # Skipped
+            # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
         # 2.10.4 Ensure Login Window Displays as Name and Password Is Enabled
         echo "Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled (Skipped)"
+            # Skipped
             # sudo defaults write "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
         # 2.10.5 Ensure Show Password Hints Is Disabled
         echo "Section 2.10.5 - Ensure Show Password Hints Is Disabled (Skipped)"
+            # Skipped
             # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
     # 2.11 Touch ID & Password (Login Password)
     echo "Section 2.11 - Touch ID & Password (Login Password)"
@@ -300,6 +315,7 @@ echo "Section 2 - System Settings"
             done
         # 2.11.2 Audit Touch ID
         echo "Section 2.11.2 - Audit Touch ID (Skipped)"
+            # Skipped
     # 2.12 Users & Groups
     echo "Section 2.12 - Users & Groups"
         # 2.12.1 Ensure Guest Account Is Disabled
@@ -394,19 +410,24 @@ echo "Section 4 - Network Configurations"
         sudo /usr/bin/defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
     # 4.2 Ensure HTTP Server Is Disabled
     echo "Section 4.2 - Ensure HTTP Server Is Disabled (Skipped)"
+        # Skipped
+        #sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
     # 4.3 Ensure NFS Server Is Disabled
     echo "Section 4.3 - Ensure NFS Server Is Disabled (Skipped)"
+        # Skipped
+        #sudo launchctl disable system/com.apple.nfsd
 # 5 System Access, Authentication and Authorization
 echo "Section 5 - System Access, Authentication and Authorization"
     # 5.1 File System Permissions and Access Controls
     echo "Section 5.1 - File System Permissions and Access Controls"
         # 5.1.1 Ensure Home Folders Are Secure
         echo "Section 5.1.1 - Ensure Home Folders Are Secure (Skipped)"
+            # Skipped
         # 5.1.2 Ensure System Integrity Protection Status (SIP) Is Enabled
         echo "Section 5.1.2 - Ensure System Integrity Protection Status (SIP) Is Enabled (Manually Check)"
             csrutil status | grep -q "enabled" || echo "WARNING: System Integrity Protection (SIP) is disabled!"
         # 5.1.3 Ensure Apple Mobile File Integrity (AMFI) Is Enabled
-        echo "Section 5.1.3 - Ensure Apple Mobile File Integrity (AMFI) Is Enabled (Skipped)"
+        echo "Section 5.1.3 - Ensure Apple Mobile File Integrity (AMFI) Is Enabled (Manually Check)"
         # 5.1.4 Ensure Signed System Volume (SSV) Is Enabled
         echo "Section 5.1.4 - Ensure Signed System Volume (SSV) Is Enabled (Manually Check)"
             csrutil authenticated-root status | grep -q "enabled" || echo "WARNING: Signed System Volume (SSV) is disabled!"
@@ -418,26 +439,36 @@ echo "Section 5 - System Access, Authentication and Authorization"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
         echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
+            # Skipped
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
         echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder (Skipped)"  
+            # Skipped
     # 5.2 Password Management
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
+            # Skipped
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
+            # Skipped
         # 5.2.3 Ensure Complex Password Must Contain Alphabetic Characters Is Configured
         echo "Section 5.2.3 - Ensure Complex Password Must Contain Alphabetic Characters Is Configured (Skipped)"
+            # Skipped
         # 5.2.4 Ensure Complex Password Must Contain Numeric Character Is Configured
         echo "Section 5.2.4 - Ensure Complex Password Must Contain Numeric Character Is Configured (Skipped)"
+            # Skipped
         # 5.2.5 Ensure Complex Password Must Contain Special Character Is Configured
         echo "Section 5.2.5 - Ensure Complex Password Must Contain Special Character Is Configured (Skipped)"
+            # Skipped
         # 5.2.6 Ensure Complex Password Must Contain Uppercase and Lowercase Characters Is Configured
         echo "Section 5.2.6 - Ensure Complex Password Must Contain Uppercase and Lowercase Characters Is Configured (Skipped)"
+            # Skipped
         # 5.2.7 Ensure Password Age Is Configured
         echo "Section 5.2.7 - Ensure Password Age Is Configured (Skipped)"
+            # Skipped
         # 5.2.8 Ensure Password History Is Configured
         echo "Section 5.2.8 - Ensure Password History Is Configured (Skipped)"
+            # Skipped
     # 5.3 Encryption
     echo "Section 5.3 - Encryption"
         # 5.3.1 Ensure all user storage APFS volumes are encrypted
@@ -446,13 +477,11 @@ echo "Section 5 - System Access, Authentication and Authorization"
         echo "Section 5.3.2 - Ensure all user storage CoreStorage volumes are encrypted  (Manually Check)"
     # 5.4 Ensure the Sudo Timeout Period Is Set to Zero
     echo "Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero (Manually Check)"
-        #if ! grep -q "Defaults timestamp_timeout=0" /etc/sudoers; then
-        #    echo "Defaults timestamp_timeout=5" | sudo tee -a /etc/sudoers
-        #fi
     # 5.5 Ensure a Separate Timestamp Is Enabled for Each User/tty Combo
     echo "Section 5.5 - Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)"
     # 5.6 Ensure the 'root' Account Is Disabled
     echo "Section 5.6 - Ensure the 'root' Account Is Disabled (Skipped)"
+        # Skipped
     # 5.7 Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session
     echo "Section 5.7 - Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session"
         sudo /usr/bin/security authorizationdb write system.login.screensaver allow
@@ -460,6 +489,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow screenUnlockMode -int 1
     # 5.8 Ensure a Login Window Banner Exists
     echo "Section 5.8 - Ensure a Login Window Banner Exists (Skipped)"
+        # Skipped
     # 5.9 Ensure the Guest Home Folder Does Not Exist
     echo "Section 5.9 - Ensure the Guest Home Folder Does Not Exist"
         if [ -d /Users/Guest ]; then
@@ -492,6 +522,7 @@ echo "Section 6 - Applications"
     echo "Section 6.3 - Safari"
         # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
         echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled (Skipped)"
+            # Skipped
         # 6.3.2 Audit History and Remove History Items
         echo "Section 6.3.2 - Audit History and Remove History Items"
             # Replace <value> with one of the allowed integers: 1, 7, 14, 31, 365, 36500
@@ -503,8 +534,10 @@ echo "Section 6 - Applications"
             killall Safari
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
         echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled (Skipped)"
+            # Skipped
         # 6.3.5 Audit Hide IP Address in Safari Setting
         echo "Section 6.3.5 - Audit Hide IP Address in Safari Setting (Skipped)"
+            # Skipped
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
         echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
             sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
@@ -515,8 +548,10 @@ echo "Section 6 - Applications"
             killall Safari
         # 6.3.8 Audit AutoFill
         echo "Section 6.3.8 - Audit AutoFill (Skipped)"
+            # Skipped
         # 6.3.9 Audit Pop-up Windows
         echo "Section 6.3.9 - Audit Pop-up Windows (Skipped)"
+            # Skipped
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
             sudo defaults write com.apple.finder ShowStatusBar -bool true
@@ -532,13 +567,16 @@ echo "Section 6 - Applications"
 echo "Section 7 - Supplemental"
     # 7.1 CIS Apple macOS Benchmark development collaboration with mSCP
     echo "Section 7.1 CIS Apple macOS Benchmark development collaboration with mSCP (Skipped)"
-        #No recommendations
+        # Skipped
+        # No recommendations
     # 7.2 Apple Push Notification Service (APNs)
     echo "Section 7.2 - Apple Push Notification Service (APNs) (Skipped)"
-        #No recommendations
+        # Skipped    
+        # No recommendations
     # 7.3 Mobile Configuration Profiles
     echo "Section 7.3 - Mobile Configuration Profiles (Skipped)"
-        #No recommendations
+        # Skipped    
+        # No recommendations
 
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
