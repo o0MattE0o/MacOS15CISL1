@@ -4,7 +4,7 @@ Level 1 - Security Settings
 
 https://workbench.cisecurity.org/benchmarks/18636/
 
-
+https://www.shellcheck.net/ - No Errors
 
 
 CHMOD 755 ~/Downloads/macOS15_SecurityBaseline.sh
