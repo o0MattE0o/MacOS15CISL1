@@ -1,0 +1,13 @@
+# 4 Network Configurations
+echo "Section 4 - Network Configurations"
+    # 4.1 Ensure Bonjour Advertising Services Is Disabled
+    echo "Section 4.1 - Ensure Bonjour Advertising Services Is Disabled"
+        sudo /usr/bin/defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
+    # 4.2 Ensure HTTP Server Is Disabled
+    echo "Section 4.2 - Ensure HTTP Server Is Disabled (Skipped)"
+        # Skipped
+        #sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
+    # 4.3 Ensure NFS Server Is Disabled
+    echo "Section 4.3 - Ensure NFS Server Is Disabled (Skipped)"
+        # Skipped
+        #sudo launchctl disable system/com.apple.nfsd
