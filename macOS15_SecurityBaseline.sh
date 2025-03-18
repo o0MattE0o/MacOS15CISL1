@@ -3,18 +3,28 @@
 # Level 1 - Security Settings
 # https://workbench.cisecurity.org/benchmarks/18636/
 
+# Ensure script runs with administrative privileges
 if [ "$(id -u)" -ne 0 ]; then
     echo "This script must be run as root!"
     exit 1
 fi
 
+# Function to apply system settings safely
 apply_setting() {
     local domain=$1
     local key=$2
     local value=$3
-    
+
     echo "Applying setting: $domain -> $key = $value"
-    sudo defaults write "$domain" "$key" "$value"
+
+    # Handle boolean values properly
+    if [[ "$value" == "true" || "$value" == "false" ]]; then
+        sudo defaults write "$domain" "$key" -bool "$value"
+    elif [[ "$value" =~ ^[0-9]+$ ]]; then
+        sudo defaults write "$domain" "$key" -int "$value"
+    else
+        sudo defaults write "$domain" "$key" "$value"
+    fi
 }
 
 # 1 Install Updates, Patches and Additional Security Software
