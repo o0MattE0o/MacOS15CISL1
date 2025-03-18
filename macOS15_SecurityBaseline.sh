@@ -3,7 +3,9 @@
 # Level 1 - Security Settings
 # https://workbench.cisecurity.org/benchmarks/18636/
 
+############################
 # 1 Install Updates, Patches and Additional Security Software
+############################
 echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.1 Ensure All Apple-provided Software Is Current
     echo "Section 1.1 - Ensure All Apple-provided Software Is Current"
@@ -33,7 +35,10 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.8 Ensure the System is Managed by a Mobile Device Management (MDM) Software
     echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)"
         #echo "Ensure Device is enrolled in Intune."
+        
+############################
 # 2 System Settings
+############################
 echo "Section 2 - System Settings"
     # 2.1 Apple Account
     echo "Section 2.1 - Apple Account"
@@ -340,7 +345,10 @@ echo "Section 2 - System Settings"
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMEnabled -bool true
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
             killall SystemUIServer
+            
+############################
 # 3 Logging and Auditing
+############################
 echo "Section 3 - Logging and Auditing"
     # 3.1 Ensure Security Auditing Is Enabled
     echo "Section 3.1 - Ensure Security Auditing Is Enabled"
@@ -380,7 +388,10 @@ echo "Section 3 - Logging and Auditing"
         sudo /bin/chmod -R 440 "$(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')"
     # 3.6 Audit Software Inventory
     echo "Section 3.6 - Audit Software Inventory (Manually Check)"
+
+############################    
 # 4 Network Configurations
+############################
 echo "Section 4 - Network Configurations"
     # 4.1 Ensure Bonjour Advertising Services Is Disabled
     echo "Section 4.1 - Ensure Bonjour Advertising Services Is Disabled"
@@ -393,7 +404,10 @@ echo "Section 4 - Network Configurations"
     echo "Section 4.3 - Ensure NFS Server Is Disabled (Skipped)"
         # Skipped
         #sudo launchctl disable system/com.apple.nfsd
+
+############################
 # 5 System Access, Authentication and Authorization
+############################
 echo "Section 5 - System Access, Authentication and Authorization"
     # 5.1 File System Permissions and Access Controls
     echo "Section 5.1 - File System Permissions and Access Controls"
@@ -481,7 +495,10 @@ echo "Section 5 - System Access, Authentication and Authorization"
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
         #Skipped 
+
+############################
 # 6 Applications
+############################
 echo "Section 6 - Applications"
     # 6.1 Finder
     echo "Section 6.1 - Finder"
@@ -535,7 +552,10 @@ echo "Section 6 - Applications"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
                 sudo -u "$user" /usr/bin/defaults write com.apple.Terminal SecureKeyboardEntry -bool true
             done
+
+############################
 # 7 Supplemental
+############################
 echo "Section 7 - Supplemental"
     # 7.1 CIS Apple macOS Benchmark development collaboration with mSCP
     echo "Section 7.1 CIS Apple macOS Benchmark development collaboration with mSCP (Skipped)"
