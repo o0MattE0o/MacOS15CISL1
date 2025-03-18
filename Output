@@ -1,11 +1,7 @@
-Last login: Tue Mar 18 13:59:33 on console
-administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
-administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
-administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh]
-chmod: /Users/administrator/Downloads/macOS15_SecurityBaseline.sh]: No such file or directory
 administrator@MacBook-Pro ~ % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
 administrator@MacBook-Pro ~ % sudo /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
-Password:
+
+
 Section 1 - Install Updates, Patches and Additional Security Software
 Section 1.1 - Ensure All Apple-provided Software Is Current
 Software Update Tool
