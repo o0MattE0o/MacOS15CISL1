@@ -1,8 +1,7 @@
-administrator@MacBook-Pro sudo cp -r /etc/security ~/security_backup
-administrator@MacBook-Pro /etc % ls ~/security_backup
-audit_class		audit_control.example	audit_event		audit_user		audit_warn
-administrator@MacBook-Pro /etc % chmod 755 /Users/administrator/Downloads/macOS15_SecurityBaseline.sh 
-administrator@MacBook-Pro /etc % sudo /Users/administrator/Downloads/macOS15_SecurityBaseline.sh 
+Last login: Wed Mar 19 23:15:44 on console
+addministrator@MacBook-Pro ~ % chmod 755 /Users/addministrator/Downloads/macOS15_SecurityBaseline.sh 
+addministrator@MacBook-Pro ~ % sudo /Users/addministrator/Downloads/macOS15_SecurityBaseline.sh 
+Password:
 Section 1 - Install Updates, Patches and Additional Security Software
 Section 1.1 - Ensure All Apple-provided Software Is Current
 Software Update Tool
@@ -39,7 +38,7 @@ Section 2.3.2 - Date & Time
 Section 2.3.2.1 - Ensure Set Time and Date Automatically Is Enabled
 Network Time is already on.
 Section 2.3.2.2 - Ensure Time Is Set Within Appropriate Limits
-+0.062630 +/- 0.009012 time.apple.com 2a01:b740:a16:3000::1e2
++0.035445 +/- 0.008984 time.apple.com 2a01:b740:a16:4000::1e2
 Section 2.3.3 - Sharing
 Section 2.3.3.1 - Ensure DVD or CD Sharing Is Disabled
 Boot-out failed: 3: No such process
@@ -90,8 +89,8 @@ Section 2.6.7 - Audit Lockdown Mode (Skipped)
 Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences (Skipped)
 Section 2.7 - Desktop & Dock
 Section 2.7.1 - Ensure Screen Saver Corners Are Secure
-/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 231: Check: command not found
-/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 235: Add: command not found
+/Users/addministrator/Downloads/macOS15_SecurityBaseline.sh: line 231: Check: command not found
+/Users/addministrator/Downloads/macOS15_SecurityBaseline.sh: line 235: Add: command not found
 Section 2.7.2 - Audit iPhone Mirroring
 Section 2.8 - Displays
 Section 2.8.1 - Audit Universal Control Settings
@@ -127,16 +126,6 @@ Section 2.17 - Internet Accounts
 Section 2.17.1 - Audit Internet Accounts for Authorized Use (Manually Check)
 Section 2.18 - Keyboard
 Section 2.18.1 - Ensure On-Device Dictation Is Enabled
-Section 3 - Logging and Auditing
-Section 3.1 - Ensure Security Auditing Is Enabled
-Security auditing is enabled. (OK)
-Section 3.2 - Ensure Security Auditing Flags For User-Attributable Events Are Configured Per Local Organizational Requirements
-The audit_control file does not contain the specified flags. Updating...
-The audit_control file has been updated with the specified flags.
-Section 3.3 - Ensure install.log Is Retained for 365 or More Days and No Maximum Size
-Section 3.4 - Ensure Security Auditing Retention Is Enabled (Skipped)
-Section 3.5 - Ensure Access to Audit Records Is Controlled
-Section 3.6 - Audit Software Inventory (Manually Check)
 Section 4 - Network Configurations
 Section 4.1 - Ensure Bonjour Advertising Services Is Disabled
 Section 4.2 - Ensure HTTP Server Is Disabled
@@ -196,4 +185,4 @@ Section 7.1 CIS Apple macOS Benchmark development collaboration with mSCP (Skipp
 Section 7.2 - Apple Push Notification Service (APNs) (Skipped)
 Section 7.3 - Mobile Configuration Profiles (Skipped)
 All CIS Policies have been applied, and this is the end of the script.
-administrator@MacBook-Pro /etc % 
+addministrator@MacBook-Pro ~ % 
