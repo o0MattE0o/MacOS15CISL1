@@ -344,45 +344,7 @@ echo "Section 2 - System Settings"
 ############################
 # 3 Logging and Auditing
 ############################
-echo "Section 3 - Logging and Auditing"
-    # 3.1 Ensure Security Auditing Is Enabled
-    echo "Section 3.1 - Ensure Security Auditing Is Enabled"
-        LAUNCHD_RUNNING=$(launchctl list | grep -c com.apple.auditd)
-        if [ "$LAUNCHD_RUNNING" -ne 1 ]; then
-            sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
-        fi
-        if [ ! -e /etc/security/audit_control ] && [ -e /etc/security/audit_control.example ]; then
-            sudo cp /etc/security/audit_control.example /etc/security/audit_control
-        else
-            sudo touch /etc/security/audit_control
-        fi
-        echo "Security auditing is enabled. (OK)"
-    # 3.2 Ensure Security Auditing Flags For User-Attributable Events Are Configured Per Local Organizational Requirements
-    echo "Section 3.2 - Ensure Security Auditing Flags For User-Attributable Events Are Configured Per Local Organizational Requirements"
-        flags_to_check="-fm, ad, -ex, aa, -fr, lo, -fw"
-        current_flags=$(grep "^flags:" /etc/security/audit_control | cut -d ' ' -f 2-)
-        if [[ "$current_flags" == *"$flags_to_check"* ]]; then
-            echo "The audit_control file already contains the specified flags."
-        else
-            echo "The audit_control file does not contain the specified flags. Updating..."
-            sudo cp /etc/security/audit_control /etc/security/audit_control.bak
-            sudo sed -i '' "s/^flags:.*/flags: $flags_to_check/" /etc/security/audit_control
-            echo "The audit_control file has been updated with the specified flags."
-        fi
-    # 3.3 Ensure install.log Is Retained for 365 or More Days and No Maximum Size
-    echo "Section 3.3 - Ensure install.log Is Retained for 365 or More Days and No Maximum Size"
-        sudo sed -i '' "s/* file \/var\/log\/install.log.*/* file \/var\/log\/install.log format='\$((Time)(JZ)) \$Host \$Sender[\$PID]: \$Message' rotate=utc compress file_max=50M size_only ttl=365/g" /etc/asl/com.apple.install
-    # 3.4 Ensure Security Auditing Retention Is Enabled
-    echo "Section 3.4 - Ensure Security Auditing Retention Is Enabled (Skipped)"
-        # Skipped
-    # 3.5 Ensure Access to Audit Records Is Controlled
-    echo "Section 3.5 - Ensure Access to Audit Records Is Controlled"
-        sudo /usr/sbin/chown -R root:wheel /etc/security/audit_control
-        sudo /bin/chmod -R og-rw /etc/security/audit_control
-        sudo /usr/sbin/chown -R root:wheel $(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
-        sudo /bin/chmod -R og-rw $(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
-    # 3.6 Audit Software Inventory
-    echo "Section 3.6 - Audit Software Inventory (Manually Check)"
+#Skipped due to errors login into MacOS after apploying
 
 ############################    
 # 4 Network Configurations
