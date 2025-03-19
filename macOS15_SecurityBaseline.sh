@@ -271,26 +271,21 @@ echo "Section 2 - System Settings"
     # 2.10 Lock Screen
     echo "Section 2.10 - Lock Screen"
         # 2.10.1 Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled
-        echo "Section 2.10.1 - Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled (Skipped)"
-            # Skipped
-            # sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
+        echo "Section 2.10.1 - Ensure an Inactivity Interval of 20 Minutes Or Less for the Screen Saver Is Enabled"
+            sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
-        echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately (Skipped)"
-            # Skipped
-            #sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
-            #sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
+        echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
+            sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
+            sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
-        echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled (skipped)"
-            # Skipped
-            # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
+        echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
+            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
         # 2.10.4 Ensure Login Window Displays as Name and Password Is Enabled
-        echo "Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled (Skipped)"
-            # Skipped
-            # sudo defaults write "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
+        echo "Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled"
+            sudo defaults write "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
         # 2.10.5 Ensure Show Password Hints Is Disabled
-        echo "Section 2.10.5 - Ensure Show Password Hints Is Disabled (Skipped)"
-            # Skipped
-            # sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
+        echo "Section 2.10.5 - Ensure Show Password Hints Is Disabled"
+            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
     # 2.11 Touch ID & Password (Login Password)
     echo "Section 2.11 - Touch ID & Password (Login Password)"
         # 2.11.1 Ensure Users' Accounts Do Not Have a Password Hint
@@ -311,12 +306,12 @@ echo "Section 2 - System Settings"
             sudo /usr/sbin/sysadminctl -smbGuestAccess off
         # 2.12.3 Ensure Automatic Login Is Disabled
         echo "Section 2.12.3 - Ensure Automatic Login Is Disabled"
-            #if sudo /usr/bin/defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser &>/dev/null; then
-            #    sudo /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
-            #    echo "Automatic login has been disabled."
-            #else
-            #    echo "autoLoginUser key does not exist. Automatic login is already disabled. (OK)"
-            #fi
+            if sudo /usr/bin/defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser &>/dev/null; then
+                sudo /usr/bin/defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
+                echo "Automatic login has been disabled."
+            else
+                echo "autoLoginUser key does not exist. Automatic login is already disabled. (OK)"
+            fi
     # 2.13 Passwords
     echo "Section 2.13 - Passwords"
         # 2.13.1 Audit Passwords System Preference Setting
@@ -383,9 +378,9 @@ echo "Section 3 - Logging and Auditing"
     # 3.5 Ensure Access to Audit Records Is Controlled
     echo "Section 3.5 - Ensure Access to Audit Records Is Controlled"
         sudo /usr/sbin/chown -R root:wheel /etc/security/audit_control
-        sudo /bin/chmod -R 440 /etc/security/audit_control
-        sudo /usr/sbin/chown -R root:wheel "$(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')"
-        sudo /bin/chmod -R 440 "$(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')"
+        sudo /bin/chmod -R og-rw /etc/security/audit_control
+        sudo /usr/sbin/chown -R root:wheel $(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
+        sudo /bin/chmod -R og-rw $(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
     # 3.6 Audit Software Inventory
     echo "Section 3.6 - Audit Software Inventory (Manually Check)"
 
@@ -397,13 +392,11 @@ echo "Section 4 - Network Configurations"
     echo "Section 4.1 - Ensure Bonjour Advertising Services Is Disabled"
         sudo /usr/bin/defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
     # 4.2 Ensure HTTP Server Is Disabled
-    echo "Section 4.2 - Ensure HTTP Server Is Disabled (Skipped)"
-        # Skipped
-        #sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
+    echo "Section 4.2 - Ensure HTTP Server Is Disabled"
+        sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
     # 4.3 Ensure NFS Server Is Disabled
-    echo "Section 4.3 - Ensure NFS Server Is Disabled (Skipped)"
-        # Skipped
-        #sudo launchctl disable system/com.apple.nfsd
+    echo "Section 4.3 - Ensure NFS Server Is Disabled"
+        sudo launchctl disable system/com.apple.nfsd
 
 ############################
 # 5 System Access, Authentication and Authorization
