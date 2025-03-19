@@ -52,15 +52,14 @@ echo "Section 3 - Logging and Auditing"
     # 3.6 Audit Software Inventory
     echo "Section 3.6 - Audit Software Inventory (Manually Check)"
 
-    # Restore Backup and Permissions (if needed)
-    #echo "Restoring original files and permissions from backup..."
-        #sudo cp /etc/security/audit_control.bak /etc/security/audit_control
-        #sudo cp /etc/asl/com.apple.install.bak /etc/asl/com.apple.install
+    # Restore Backup and Permissions (if needed - MacOs Recovery Mode)
+        #cp /etc/security/audit_control.bak /etc/security/audit_control
+        #cp /etc/asl/com.apple.install.bak /etc/asl/com.apple.install
     # Restore permissions
-        #sudo chmod $(echo $audit_control_perms | awk '{print $1}') /etc/security/audit_control
-        #sudo chown $(echo $audit_control_perms | awk '{print $2":"$3}') /etc/security/audit_control
-        #sudo chmod $(echo $install_log_perms | awk '{print $1}') /etc/asl/com.apple.install
-        #sudo chown $(echo $install_log_perms | awk '{print $2":"$3}') /etc/asl/com.apple.install
+        #chmod $(echo $audit_control_perms | awk '{print $1}') /etc/security/audit_control
+        #chown $(echo $audit_control_perms | awk '{print $2":"$3}') /etc/security/audit_control
+        #chmod $(echo $install_log_perms | awk '{print $1}') /etc/asl/com.apple.install
+        #chown $(echo $install_log_perms | awk '{print $2":"$3}') /etc/asl/com.apple.install
 
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
