@@ -38,9 +38,9 @@ echo "Section 3 - Logging and Auditing"
     # 3.5 Ensure Access to Audit Records Is Controlled
     echo "Section 3.5 - Ensure Access to Audit Records Is Controlled"
         sudo /usr/sbin/chown -R root:wheel /etc/security/audit_control
-        sudo /bin/chmod -R 440 /etc/security/audit_control
-        sudo /usr/sbin/chown -R root:wheel "$(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')"
-        sudo /bin/chmod -R 440 "$(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')"
+        sudo /bin/chmod -R og-rw /etc/security/audit_control
+        sudo /usr/sbin/chown -R root:wheel $(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
+        sudo /bin/chmod -R og-rw $(/usr/bin/sudo /usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
     # 3.6 Audit Software Inventory
     echo "Section 3.6 - Audit Software Inventory (Manually Check)"
 
