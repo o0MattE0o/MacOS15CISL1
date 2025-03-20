@@ -8,8 +8,23 @@ echo "Section 5 - System Access, Authentication and Authorization"
     # 5.1 File System Permissions and Access Controls
     echo "Section 5.1 - File System Permissions and Access Controls"
         # 5.1.1 Ensure Home Folders Are Secure
-        echo "Section 5.1.1 - Ensure Home Folders Are Secure (Skipped)"
-            # Skipped
+        echo "Section 5.1.1 - Ensure Home Folders Are Secure"
+            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+                home_dir="/Users/$user"
+                if [ -d "$home_dir" ]; then
+                    perms=$(stat -f %Lp "$home_dir")
+                    if [ "$perms" != "700" ]; then
+                        echo "Fixing permissions for $home_dir"
+                        sudo chmod 700 "$home_dir"
+                    fi
+                    owner=$(stat -f %Su "$home_dir")
+                    group=$(stat -f %Sg "$home_dir")
+                    if [ "$owner" != "$user" ] || [ "$group" != "staff" ]; then
+                        echo "Fixing ownership for $home_dir"
+                        sudo chown "$user:staff" "$home_dir"
+                    fi
+                fi
+            done
         # 5.1.2 Ensure System Integrity Protection Status (SIP) Is Enabled
         echo "Section 5.1.2 - Ensure System Integrity Protection Status (SIP) Is Enabled (Manually Check)"
             csrutil status | grep -q "enabled" || echo "WARNING: System Integrity Protection (SIP) is disabled!"
@@ -25,16 +40,41 @@ echo "Section 5 - System Access, Authentication and Authorization"
                 sudo /bin/chmod -R o-w "$apps"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
-        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
-            # Skipped
+        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder"
+            world_writable_dirs=$(sudo find /System -type d -perm -002 -print)
+            if [ -n "$world_writable_dirs" ]; then
+                echo "World-writable directories found:"
+                echo "$world_writable_dirs"
+                
+                # Loop through and fix permissions
+                echo "$world_writable_dirs" | while read -r dir; do
+                    echo "Fixing permissions for $dir"
+                    sudo chmod o-w "$dir"
+                done
+                
+                echo "All world-writable directories have been fixed. (FIXED)"
+            else
+                echo "No world-writable directories found in /System. (OK)"
+            fi
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
         echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder (Skipped)"  
-            # Skipped
+            world_writable_dirs=$(sudo find /Library -type d -perm -002)
+            if [ -z "$world_writable_dirs" ]; then
+                echo "No world-writable directories found in /Library."
+            else
+                echo "World-writable directories found in /Library:"
+                echo "$world_writable_dirs"
+                for dir in $world_writable_dirs; do
+                    echo "Fixing permissions for $dir"
+                    sudo chmod o-w "$dir"
+                done
+                echo "All world-writable directories have been fixed. (FIXED)"
+            fi
     # 5.2 Password Management
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            # Skipped
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
             # Skipped
@@ -63,7 +103,18 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # 5.3.2 Ensure all user storage CoreStorage volumes are encrypted
         echo "Section 5.3.2 - Ensure all user storage CoreStorage volumes are encrypted  (Manually Check)"
     # 5.4 Ensure the Sudo Timeout Period Is Set to Zero
-    echo "Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero (Manually Check)"
+    echo "Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero"
+        sudoers_file="/etc/sudoers"
+        timestamp_setting="Defaults    timestamp_timeout=0"
+        if sudo grep -q "$timestamp_setting" "$sudoers_file"; then
+            echo "Sudo timeout is already set to zero."
+        else
+            echo "Setting sudo timeout period to zero..."
+            # Edit sudoers file safely using visudo to ensure proper syntax checking
+            sudo visudo -c && echo "$timestamp_setting" | sudo tee -a "$sudoers_file" > /dev/null
+            echo "Sudo timeout period has been set to zero."
+        fi
+        echo "Sudo timeout period configuration complete."
     # 5.5 Ensure a Separate Timestamp Is Enabled for Each User/tty Combo
     echo "Section 5.5 - Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)"
     # 5.6 Ensure the 'root' Account Is Disabled
@@ -90,7 +141,19 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # Skipped
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
-        #Skipped 
+        sudoers_file="/etc/sudoers"
+        logfile_setting="Defaults    logfile=\"/var/log/sudo.log\""
+        if sudo grep -q "$logfile_setting" "$sudoers_file"; then
+            echo "Sudo logging is already enabled."
+        else
+            echo "Enabling sudo logging..."
+            # Edit sudoers file safely using visudo to ensure proper syntax checking
+            sudo visudo -c && echo "$logfile_setting" | sudo tee -a "$sudoers_file" > /dev/null
+            echo "Sudo logging has been enabled."
+        fi
+        sudo touch /var/log/sudo.log
+        sudo chmod 600 /var/log/sudo.log
+        sudo chown root:root /var/log/sudo.log
 
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
