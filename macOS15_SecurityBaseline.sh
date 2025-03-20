@@ -13,9 +13,6 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool true
-        sudo defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -31,7 +28,8 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true
     # 1.7 Ensure Software Update Deferment Is Less Than or Equal to 30 Days
     echo "Section 1.7 - Ensure Software Update Deferment Is Less Than or Equal to 30 Days"
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate enforcedSoftwareUpdateDelay -int 5  # No. Days Deferred
+       SOFTWARE_UPDATE_DELAY=5  # Set to a value between 1 and 30
+       sudo defaults write com.apple.applicationaccess enforcedSoftwareUpdateDelay -int "$SOFTWARE_UPDATE_DELAY"
     # 1.8 Ensure the System is Managed by a Mobile Device Management (MDM) Software
     echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)"
         #echo "Ensure Device is enrolled in Intune."
@@ -69,19 +67,19 @@ echo "Section 2 - System Settings"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
         # 2.2.2	Ensure Firewall Stealth Mode Is Enabled
         echo "Section 2.2.2 - Ensure Firewall Stealth Mode Is Enabled"
-            sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+            sudo defaults write /Library/Preferences/com.apple.alf stealthenabled -int 1
     #2.3 General
     echo "Section 2.3 - General"
         # 2.3.1 AirDrop & Handoff
         echo "Section 2.3.1 - AirDrop & Handoff"
             # 2.3.1.1 Ensure AirDrop Is Disabled When Not Actively Transferring Files
             echo "Section 2.3.1.1 - Ensure AirDrop Is Disabled When Not Actively Transferring Files"
-                sudo defaults write "com.apple.NetworkBrowser" "DisableAirDrop" -bool true
-                killall Finder
+                sudo defaults write com.apple.applicationaccess allowAirDrop -bool false
+                defaults write com.apple.applicationaccess allowAirDrop -bool false
             # 2.3.1.2 Ensure AirPlay Receiver Is Disabled
             echo "Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled"
-                sudo defaults write /Library/Preferences/com.apple.airplay disableAirPlayReceiver -bool true
-                killall -HUP SystemUIServer
+                sudo defaults write com.apple.applicationaccess allowAirPlayIncomingRequests -bool false
+                defaults write com.apple.applicationaccess allowAirPlayIncomingRequests -bool false
         # 2.3.2 Date & Time
         echo "Section 2.3.2 - Date & Time"
                 # 2.3.2.1 Ensure Set Time and Date Automatically Is Enabled
@@ -135,8 +133,8 @@ echo "Section 2 - System Settings"
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
             echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
-                /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false > /dev/null 2>&1
-                sudo launchctl kickstart -k system/com.apple.bluetoothd > /dev/null 2>&1
+                sudo defaults write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
+                defaults write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -158,8 +156,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.4 - Control Center"
         # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
         echo "Section 2.4.1 - Ensure Show Wi-Fi status in Menu Bar Is Enabled"
-            sudo defaults write com.apple.systemuiserver menuExtras -array-add "/System/Library/CoreServices/Menu Extras/AirPort.menu"
-            killall SystemUIServer
+            sudo defaults write com.apple.controlcenter WiFi -int 18
         # 2.4.2	Ensure Show Bluetooth Status in Menu Bar Is Enabled
         echo "Section 2.4.2 - Ensure Show Bluetooth Status in Menu Bar Is Enabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
@@ -169,20 +166,11 @@ echo "Section 2 - System Settings"
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
         echo "Section 2.5.1 - Audit Siri Settings"
-            /usr/bin/defaults write com.apple.assistant.support "Assistant Enabled" -bool false > /dev/null 2>&1
-            killall Siri > /dev/null 2>&1
-            killall Assistant > /dev/null 2>&1
+            sudo defaults write /Library/Preferences/com.apple.ironwood.support Ironwood Allowed -bool true
+            sudo defaults write com.apple.applicationaccess allowAssistant -bool true
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                user_pref_path="/Users/$user/Library/Preferences/com.apple.assistant.support"
-                if [ -f "$user_pref_path" ]; then
-                    sudo -u "$user" /usr/bin/defaults write "$user_pref_path" 'Assistant Enabled' -bool false
-                    echo "Disabled Listen for Siri for user: $user"
-                else
-                    echo "No Siri preferences found for user: $user"
-                fi
-            done
+            sudo defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
     # 2.6 Privacy & Security
     echo "Section 2.6 - Privacy & Security"
         # 2.6.1 Location Services
@@ -233,21 +221,8 @@ echo "Section 2 - System Settings"
             echo "sudo /usr/bin/defaults read /Library/Managed\ Preferences/com.apple.security.lockdownmode Enabled"
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
         echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences"
-            current_setting=$(sudo security authorizationdb read system.preferences 2>/dev/null)
-            if [ $? -eq 0 ]; then
-                if echo "$current_setting" | grep -q '"shared" = true'; then
-                    echo "System preferences are accessible without an admin password. Changing to require admin password."
-                    sudo security authorizationdb write system.preferences authenticate-admin
-                    echo "System preferences now require an admin password."
-                else
-                    echo "System preferences already require an admin password."
-                fi
-            else
-                echo "Error: Unable to read system.preferences authorization. The rule may not exist."
-                echo "Attempting to configure system preferences to require admin password."
-                sudo security authorizationdb write system.preferences authenticate-admin
-                echo "System preferences now require an admin password."
-            fi
+            sudo defaults write /Library/Preferences/com.apple.systempreferences SecurityAdmin -bool true
+
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -299,7 +274,7 @@ echo "Section 2 - System Settings"
             sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
+            defaults write "com.apple.screensaver" "askForPassword" -int 1
             sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
@@ -361,8 +336,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.18 - Keyboard"
         # 2.18.1 Ensure On-Device Dictation Is Enabled
         echo "Section 2.18.1 - Ensure On-Device Dictation Is Enabled"
-            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMEnabled -bool true
-            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
+            sudo defaults write com.apple.applicationaccess forceOnDeviceOnlyDictation -bool true
             killall SystemUIServer
             
 ############################
@@ -428,13 +402,19 @@ echo "Section 5 - System Access, Authentication and Authorization"
             if [ -n "$world_writable_dirs" ]; then
                 echo "World-writable directories found:"
                 echo "$world_writable_dirs"
-                
-                # Loop through and fix permissions
+            
+                # Loop through each directory and fix permissions
                 echo "$world_writable_dirs" | while read -r dir; do
-                    echo "Fixing permissions for $dir"
+                    echo "Fixing permissions for: $dir"
+                    
+                    # Apply the chmod command to remove world-writable permission
                     sudo chmod o-w "$dir"
+                    
+                    # Verify the permissions were fixed (Optional: print new permissions)
+                    new_permissions=$(ls -ld "$dir" | awk '{print $1}')
+                    echo "Updated permissions for $dir: $new_permissions"
                 done
-                
+            
                 echo "All world-writable directories have been fixed. (FIXED)"
             else
                 echo "No world-writable directories found in /System. (OK)"
@@ -458,9 +438,10 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
             sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributeMinutesUntilFailedAuthenticationReset=1"
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
-            # Skipped
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordMatches=14"
         # 5.2.3 Ensure Complex Password Must Contain Alphabetic Characters Is Configured
         echo "Section 5.2.3 - Ensure Complex Password Must Contain Alphabetic Characters Is Configured (Skipped)"
             # Skipped
@@ -477,8 +458,8 @@ echo "Section 5 - System Access, Authentication and Authorization"
         echo "Section 5.2.7 - Ensure Password Age Is Configured (Skipped)"
             # Skipped
         # 5.2.8 Ensure Password History Is Configured
-        echo "Section 5.2.8 - Ensure Password History Is Configured (Skipped)"
-            # Skipped
+        echo "Section 5.2.8 - Ensure Password History Is Configured"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordHistoryDepth=15"
     # 5.3 Encryption
     echo "Section 5.3 - Encryption"
         # 5.3.1 Ensure all user storage APFS volumes are encrypted
@@ -525,7 +506,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
         sudoers_file="/etc/sudoers"
-        logfile_setting="Defaults    logfile=\"/var/log/sudo.log\""
+        logfile_setting="Defaults logfile=\"/var/log/sudo.log\""
         if sudo grep -q "$logfile_setting" "$sudoers_file"; then
             echo "Sudo logging is already enabled."
         else
@@ -537,6 +518,13 @@ echo "Section 5 - System Access, Authentication and Authorization"
         sudo touch /var/log/sudo.log
         sudo chmod 600 /var/log/sudo.log
         sudo chown root:root /var/log/sudo.log
+        echo "Checking if sudo logging is enabled..."
+        sudo -V | grep "logfile"
+        if sudo -V | grep -q "logfile=\"/var/log/sudo.log\""; then
+            echo "Sudo logging is correctly configured."
+        else
+            echo "Failed to configure sudo logging."
+        fi
 ############################
 # 6 Applications
 ############################
@@ -545,8 +533,8 @@ echo "Section 6 - Applications"
     echo "Section 6.1 - Finder"
         # 6.1.1	Ensure Show All Filename Extensions Setting is Enabled
         echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled"
+            sudo defaults write com.apple.finder AppleShowAllExtensions -bool true
             defaults write com.apple.finder AppleShowAllExtensions -bool true
-            killall Finder
     # 6.2 Mail
     echo "Section 6.2 - Mail"
         # 6.2.1 Ensure Protect Mail Activity in Mail Is Enabled
@@ -555,7 +543,7 @@ echo "Section 6 - Applications"
     echo "Section 6.3 - Safari"
         # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
         echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled"
-            defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
+            sudo defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -570,7 +558,7 @@ echo "Section 6 - Applications"
             sudo defaults write com.apple.Safari HistoryAgeInDaysLimit -int $value
         # 6.3.3 Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
         echo "Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled"
-            defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
+            sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -580,7 +568,9 @@ echo "Section 6 - Applications"
             echo "Warn when visiting fraudulent websites is now enabled in Safari."
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
         echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
-            defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
+            sudo defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 2
+            sudo defaults write com.apple.Safari BlockStoragePolicy -int 2
+            sudo defaults write -g WebKitPreferences.storageBlockingPolicy -int 2
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -593,7 +583,8 @@ echo "Section 6 - Applications"
             # Skipped
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
         echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
-            defaults write com.apple.Safari ContentBlockersEnabled -bool true
+            sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
+            sudo defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -603,7 +594,7 @@ echo "Section 6 - Applications"
             echo "Advertising Privacy Protection is now enabled in Safari."
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
         echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
-            defaults write com.apple.Safari ShowFullURL -bool true
+            defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -619,7 +610,7 @@ echo "Section 6 - Applications"
             # Skipped
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
-            defaults write com.apple.Safari ShowStatusBar -bool true
+            sudo defaults write com.apple.finder ShowOverlayStatusBar -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
