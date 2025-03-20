@@ -44,8 +44,8 @@ echo "Section 2 - System Settings"
                 killall Finder
             # 2.3.1.2 Ensure AirPlay Receiver Is Disabled
             echo "Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled"
-                sudo defaults write "/Library/Preferences/com.apple.Bluetooth" "ControllerPowerState" -int 0
-                sudo launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist
+                sudo defaults write /Library/Preferences/com.apple.airplay disableAirPlayReceiver -bool true
+                killall -HUP SystemUIServer
         # 2.3.2 Date & Time
         echo "Section 2.3.2 - Date & Time"
                 # 2.3.2.1 Ensure Set Time and Date Automatically Is Enabled
@@ -72,14 +72,14 @@ echo "Section 2 - System Settings"
             echo "Section 2.3.3.4 - Ensure Printer Sharing Is Disabled"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
-            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled (Skipped)"
-                #Skipped
+            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
+                sudo systemsetup -setremotelogin off > /dev/null 2>&1
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
             # 2.3.3.7 Ensure Remote Apple Events Is Disabled
-            echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled (Skipped)"
-                #Skipped
+            echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled"
+                sudo systemsetup -setremoteappleevents off > /dev/null 2>&1
             # 2.3.3.8 Ensure Internet Sharing Is Disabled
             echo "Section 2.3.3.8 - Ensure Internet Sharing Is Disabled"
                 sudo /usr/bin/defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
@@ -98,8 +98,9 @@ echo "Section 2 - System Settings"
                     sudo -u "$user" /usr/bin/defaults write com.apple.amp.mediasharingd home-sharing-enabled -bool false
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
-            echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled (Skipped)"
-                #Skipped
+            echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
+                /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false > /dev/null 2>&1
+                sudo launchctl kickstart -k system/com.apple.bluetoothd > /dev/null 2>&1
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -116,7 +117,7 @@ echo "Section 2 - System Settings"
                 fi
             # 2.3.4.2 Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled
             echo "Section 2.3.4.2 - Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled (Skipped)"
-                # Skipped
+                # Skipped - Time Machine is disabled
     # 2.4 Control Center
     echo "Section 2.4 - Control Center"
         # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
@@ -131,26 +132,35 @@ echo "Section 2 - System Settings"
     #2.5 Siri
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
-        echo "Section 2.5.1 - Audit Siri Settings (Skipped)"
-            #Skipped
+        echo "Section 2.5.1 - Audit Siri Settings"
+            /usr/bin/defaults write com.apple.assistant.support "Assistant Enabled" -bool false > /dev/null 2>&1
+            killall Siri > /dev/null 2>&1
+            killall Assistant > /dev/null 2>&1
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Preferences/com.apple.assistant.support 'Assistant Enabled' -bool false
+                user_pref_path="/Users/$user/Library/Preferences/com.apple.assistant.support"
+                if [ -f "$user_pref_path" ]; then
+                    sudo -u "$user" /usr/bin/defaults write "$user_pref_path" 'Assistant Enabled' -bool false
+                    echo "Disabled Listen for Siri for user: $user"
+                else
+                    echo "No Siri preferences found for user: $user"
+                fi
             done
     # 2.6 Privacy & Security
     echo "Section 2.6 - Privacy & Security"
         # 2.6.1 Location Services
         echo "Section 2.6.1 - Location Services"
             # 2.6.1.1 Ensure Location Services Is Enabled
-            echo "Section 2.6.1.1 - Ensure Location Services Is Enabled(Skipped)"
-                #Skipped
+            echo "Section 2.6.1.1 - Ensure Location Services Is Enabled(Manually Check)"
+                echo "Enabling Location Services via Terminal on macOS cannot be done directly due to System Integrity Protection (SIP) restrictions."
             # 2.6.1.2 Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled
             echo "Section 2.6.1.2 - Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled"
                 sudo /usr/bin/defaults write /Library/Preferences/com.apple.locationmenu.plist ShowSystemServices -bool true
             # 2.6.1.3 Audit Location Services Access
-            echo "Section 2.6.1.3 - Audit Location Services Access (Skipped)"
-                # Skipped
+            echo "Section 2.6.1.3 - Audit Location Services Access (Manually Check)"
+                echo "To audit Location Services access on macOS 15, you need to check which applications have access to location data. Use the following Terminal commands:"
+                echo "sudo /usr/bin/defaults read /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd LocationServicesEnabled"
         # 2.6.2 Full Disk Access
         echo "Section 2.6.2 - Full Disk Access"
             # 2.6.2.1 Audit Full Disk Access for Applications
@@ -179,15 +189,29 @@ echo "Section 2 - System Settings"
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
         # 2.6.6 Ensure FileVault Is Enabled
-        echo "Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)"
-            # Skipped
-            # Should be carried out via Intune Policy
+        echo "Section 2.6.6 - Ensure FileVault Is Enabled (Manually Check)"
+            echo "Enable FileVault manually and place key into password store"
         # 2.6.7 Audit Lockdown Mode
-        echo "Section 2.6.7 - Audit Lockdown Mode (Skipped)"
-            #Skipped
+        echo "Section 2.6.7 - Audit Lockdown Mode (Manually Check)"
+            echo "To audit Lockdown Mode on macOS 15 via Terminal, use the following command:"
+            echo "sudo /usr/bin/defaults read /Library/Managed\ Preferences/com.apple.security.lockdownmode Enabled"
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
-        echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences (Skipped)"
-            # Skipped
+        echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences"
+            current_setting=$(sudo security authorizationdb read system.preferences 2>/dev/null)
+            if [ $? -eq 0 ]; then
+                if echo "$current_setting" | grep -q '"shared" = true'; then
+                    echo "System preferences are accessible without an admin password. Changing to require admin password."
+                    sudo security authorizationdb write system.preferences authenticate-admin
+                    echo "System preferences now require an admin password."
+                else
+                    echo "System preferences already require an admin password."
+                fi
+            else
+                echo "Error: Unable to read system.preferences authorization. The rule may not exist."
+                echo "Attempting to configure system preferences to require admin password."
+                sudo security authorizationdb write system.preferences authenticate-admin
+                echo "System preferences now require an admin password."
+            fi
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -259,7 +283,7 @@ echo "Section 2 - System Settings"
             done
         # 2.11.2 Audit Touch ID
         echo "Section 2.11.2 - Audit Touch ID (Skipped)"
-            # Skipped
+            # Skipped - Touch ID audit isn't as straightforward through Terminal commands because its tied into both FileVault and system preferences.
     # 2.12 Users & Groups
     echo "Section 2.12 - Users & Groups"
         # 2.12.1 Ensure Guest Account Is Disabled
@@ -304,6 +328,5 @@ echo "Section 2 - System Settings"
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMEnabled -bool true
             sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
             killall SystemUIServer
-
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
