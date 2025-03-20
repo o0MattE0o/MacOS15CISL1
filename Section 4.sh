@@ -9,13 +9,11 @@ echo "Section 4 - Network Configurations"
     echo "Section 4.1 - Ensure Bonjour Advertising Services Is Disabled"
         sudo /usr/bin/defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
     # 4.2 Ensure HTTP Server Is Disabled
-    echo "Section 4.2 - Ensure HTTP Server Is Disabled (Skipped)"
-        # Skipped
-        #sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
+    echo "Section 4.2 - Ensure HTTP Server Is Disabled"
+        sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
     # 4.3 Ensure NFS Server Is Disabled
-    echo "Section 4.3 - Ensure NFS Server Is Disabled (Skipped)"
-        # Skipped
-        #sudo launchctl disable system/com.apple.nfsd
+    echo "Section 4.3 - Ensure NFS Server Is Disabled"
+        sudo launchctl disable system/com.apple.nfsd
 
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
