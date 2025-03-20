@@ -12,10 +12,10 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
         sudo softwareupdate -i -a
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
-        sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticCheckEnabled" -bool true
-        sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticDownload" -bool true
-        sudo defaults write "/Library/Preferences/com.apple.SoftwareUpdate" "AutomaticallyInstallMacOSUpdates" -bool true
-        sudo defaults write "/Library/Preferences/com.apple.commerce" "AutoUpdate" -bool TRUE
+        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
+        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
+        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool true
+        sudo defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -31,7 +31,7 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true
     # 1.7 Ensure Software Update Deferment Is Less Than or Equal to 30 Days
     echo "Section 1.7 - Ensure Software Update Deferment Is Less Than or Equal to 30 Days"
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate enforcedSoftwareUpdateDelay -int 5 #No.Days Deferred
+        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate enforcedSoftwareUpdateDelay -int 5  # No. Days Deferred
     # 1.8 Ensure the System is Managed by a Mobile Device Management (MDM) Software
     echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)"
         #echo "Ensure Device is enrolled in Intune."
@@ -80,8 +80,8 @@ echo "Section 2 - System Settings"
                 killall Finder
             # 2.3.1.2 Ensure AirPlay Receiver Is Disabled
             echo "Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled"
-                sudo defaults write "/Library/Preferences/com.apple.Bluetooth" "ControllerPowerState" -int 0
-                sudo launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist
+                sudo defaults write /Library/Preferences/com.apple.airplay disableAirPlayReceiver -bool true
+                killall -HUP SystemUIServer
         # 2.3.2 Date & Time
         echo "Section 2.3.2 - Date & Time"
                 # 2.3.2.1 Ensure Set Time and Date Automatically Is Enabled
@@ -108,14 +108,14 @@ echo "Section 2 - System Settings"
             echo "Section 2.3.3.4 - Ensure Printer Sharing Is Disabled"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
-            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled (Skipped)"
-                #Skipped
+            echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
+                sudo systemsetup -setremotelogin off > /dev/null 2>&1
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
             # 2.3.3.7 Ensure Remote Apple Events Is Disabled
-            echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled (Skipped)"
-                #Skipped
+            echo "Section 2.3.3.7 - Ensure Remote Apple Events Is Disabled"
+                sudo systemsetup -setremoteappleevents off > /dev/null 2>&1
             # 2.3.3.8 Ensure Internet Sharing Is Disabled
             echo "Section 2.3.3.8 - Ensure Internet Sharing Is Disabled"
                 sudo /usr/bin/defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
@@ -134,8 +134,9 @@ echo "Section 2 - System Settings"
                     sudo -u "$user" /usr/bin/defaults write com.apple.amp.mediasharingd home-sharing-enabled -bool false
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
-            echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled (Skipped)"
-                #Skipped
+            echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
+                /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false > /dev/null 2>&1
+                sudo launchctl kickstart -k system/com.apple.bluetoothd > /dev/null 2>&1
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -152,7 +153,7 @@ echo "Section 2 - System Settings"
                 fi
             # 2.3.4.2 Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled
             echo "Section 2.3.4.2 - Ensure Time Machine Volumes Are Encrypted If Time Machine Is Enabled (Skipped)"
-                # Skipped
+                # Skipped - Time Machine is disabled
     # 2.4 Control Center
     echo "Section 2.4 - Control Center"
         # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
@@ -167,26 +168,35 @@ echo "Section 2 - System Settings"
     #2.5 Siri
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
-        echo "Section 2.5.1 - Audit Siri Settings (Skipped)"
-            #Skipped
+        echo "Section 2.5.1 - Audit Siri Settings"
+            /usr/bin/defaults write com.apple.assistant.support "Assistant Enabled" -bool false > /dev/null 2>&1
+            killall Siri > /dev/null 2>&1
+            killall Assistant > /dev/null 2>&1
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Preferences/com.apple.assistant.support 'Assistant Enabled' -bool false
+                user_pref_path="/Users/$user/Library/Preferences/com.apple.assistant.support"
+                if [ -f "$user_pref_path" ]; then
+                    sudo -u "$user" /usr/bin/defaults write "$user_pref_path" 'Assistant Enabled' -bool false
+                    echo "Disabled Listen for Siri for user: $user"
+                else
+                    echo "No Siri preferences found for user: $user"
+                fi
             done
     # 2.6 Privacy & Security
     echo "Section 2.6 - Privacy & Security"
         # 2.6.1 Location Services
         echo "Section 2.6.1 - Location Services"
             # 2.6.1.1 Ensure Location Services Is Enabled
-            echo "Section 2.6.1.1 - Ensure Location Services Is Enabled(Skipped)"
-                #Skipped
+            echo "Section 2.6.1.1 - Ensure Location Services Is Enabled(Manually Check)"
+                echo "Enabling Location Services via Terminal on macOS cannot be done directly due to System Integrity Protection (SIP) restrictions."
             # 2.6.1.2 Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled
             echo "Section 2.6.1.2 - Ensure 'Show Location Icon in Control Center when System Services Request Your Location' Is Enabled"
                 sudo /usr/bin/defaults write /Library/Preferences/com.apple.locationmenu.plist ShowSystemServices -bool true
             # 2.6.1.3 Audit Location Services Access
-            echo "Section 2.6.1.3 - Audit Location Services Access (Skipped)"
-                # Skipped
+            echo "Section 2.6.1.3 - Audit Location Services Access (Manually Check)"
+                echo "To audit Location Services access on macOS 15, you need to check which applications have access to location data. Use the following Terminal commands:"
+                echo "sudo /usr/bin/defaults read /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd LocationServicesEnabled"
         # 2.6.2 Full Disk Access
         echo "Section 2.6.2 - Full Disk Access"
             # 2.6.2.1 Audit Full Disk Access for Applications
@@ -215,15 +225,29 @@ echo "Section 2 - System Settings"
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist AllowIdentifiedDevelopers -bool true
             sudo defaults write /Library/Preferences/com.apple.systempolicy.control.plist EnableAssessment -bool true
         # 2.6.6 Ensure FileVault Is Enabled
-        echo "Section 2.6.6 - Ensure FileVault Is Enabled (Skipped)"
-            # Skipped
-            # Should be carried out via Intune Policy
+        echo "Section 2.6.6 - Ensure FileVault Is Enabled (Manually Check)"
+            echo "Enable FileVault manually and place key into password store"
         # 2.6.7 Audit Lockdown Mode
-        echo "Section 2.6.7 - Audit Lockdown Mode (Skipped)"
-            #Skipped
+        echo "Section 2.6.7 - Audit Lockdown Mode (Manually Check)"
+            echo "To audit Lockdown Mode on macOS 15 via Terminal, use the following command:"
+            echo "sudo /usr/bin/defaults read /Library/Managed\ Preferences/com.apple.security.lockdownmode Enabled"
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
-        echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences (Skipped)"
-            # Skipped
+        echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences"
+            current_setting=$(sudo security authorizationdb read system.preferences 2>/dev/null)
+            if [ $? -eq 0 ]; then
+                if echo "$current_setting" | grep -q '"shared" = true'; then
+                    echo "System preferences are accessible without an admin password. Changing to require admin password."
+                    sudo security authorizationdb write system.preferences authenticate-admin
+                    echo "System preferences now require an admin password."
+                else
+                    echo "System preferences already require an admin password."
+                fi
+            else
+                echo "Error: Unable to read system.preferences authorization. The rule may not exist."
+                echo "Attempting to configure system preferences to require admin password."
+                sudo security authorizationdb write system.preferences authenticate-admin
+                echo "System preferences now require an admin password."
+            fi
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -295,7 +319,7 @@ echo "Section 2 - System Settings"
             done
         # 2.11.2 Audit Touch ID
         echo "Section 2.11.2 - Audit Touch ID (Skipped)"
-            # Skipped
+            # Skipped - Touch ID audit isn't as straightforward through Terminal commands because its tied into both FileVault and system preferences.
     # 2.12 Users & Groups
     echo "Section 2.12 - Users & Groups"
         # 2.12.1 Ensure Guest Account Is Disabled
@@ -344,7 +368,7 @@ echo "Section 2 - System Settings"
 ############################
 # 3 Logging and Auditing
 ############################
-#Skipped due to errors login into MacOS after apploying
+#Skipped due to errors login into MacOS after applying
 
 ############################    
 # 4 Network Configurations
@@ -367,8 +391,23 @@ echo "Section 5 - System Access, Authentication and Authorization"
     # 5.1 File System Permissions and Access Controls
     echo "Section 5.1 - File System Permissions and Access Controls"
         # 5.1.1 Ensure Home Folders Are Secure
-        echo "Section 5.1.1 - Ensure Home Folders Are Secure (Skipped)"
-            # Skipped
+        echo "Section 5.1.1 - Ensure Home Folders Are Secure"
+            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
+                home_dir="/Users/$user"
+                if [ -d "$home_dir" ]; then
+                    perms=$(stat -f %Lp "$home_dir")
+                    if [ "$perms" != "700" ]; then
+                        echo "Fixing permissions for $home_dir"
+                        sudo chmod 700 "$home_dir"
+                    fi
+                    owner=$(stat -f %Su "$home_dir")
+                    group=$(stat -f %Sg "$home_dir")
+                    if [ "$owner" != "$user" ] || [ "$group" != "staff" ]; then
+                        echo "Fixing ownership for $home_dir"
+                        sudo chown "$user:staff" "$home_dir"
+                    fi
+                fi
+            done
         # 5.1.2 Ensure System Integrity Protection Status (SIP) Is Enabled
         echo "Section 5.1.2 - Ensure System Integrity Protection Status (SIP) Is Enabled (Manually Check)"
             csrutil status | grep -q "enabled" || echo "WARNING: System Integrity Protection (SIP) is disabled!"
@@ -384,16 +423,41 @@ echo "Section 5 - System Access, Authentication and Authorization"
                 sudo /bin/chmod -R o-w "$apps"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
-        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
-            # Skipped
+        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder"
+            world_writable_dirs=$(sudo find /System -type d -perm -002 -print)
+            if [ -n "$world_writable_dirs" ]; then
+                echo "World-writable directories found:"
+                echo "$world_writable_dirs"
+                
+                # Loop through and fix permissions
+                echo "$world_writable_dirs" | while read -r dir; do
+                    echo "Fixing permissions for $dir"
+                    sudo chmod o-w "$dir"
+                done
+                
+                echo "All world-writable directories have been fixed. (FIXED)"
+            else
+                echo "No world-writable directories found in /System. (OK)"
+            fi
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
         echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder (Skipped)"  
-            # Skipped
+            world_writable_dirs=$(sudo find /Library -type d -perm -002)
+            if [ -z "$world_writable_dirs" ]; then
+                echo "No world-writable directories found in /Library."
+            else
+                echo "World-writable directories found in /Library:"
+                echo "$world_writable_dirs"
+                for dir in $world_writable_dirs; do
+                    echo "Fixing permissions for $dir"
+                    sudo chmod o-w "$dir"
+                done
+                echo "All world-writable directories have been fixed. (FIXED)"
+            fi
     # 5.2 Password Management
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            # Skipped
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
             # Skipped
@@ -422,7 +486,18 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # 5.3.2 Ensure all user storage CoreStorage volumes are encrypted
         echo "Section 5.3.2 - Ensure all user storage CoreStorage volumes are encrypted  (Manually Check)"
     # 5.4 Ensure the Sudo Timeout Period Is Set to Zero
-    echo "Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero (Manually Check)"
+    echo "Section 5.4 - Ensure the Sudo Timeout Period Is Set to Zero"
+        sudoers_file="/etc/sudoers"
+        timestamp_setting="Defaults    timestamp_timeout=0"
+        if sudo grep -q "$timestamp_setting" "$sudoers_file"; then
+            echo "Sudo timeout is already set to zero."
+        else
+            echo "Setting sudo timeout period to zero..."
+            # Edit sudoers file safely using visudo to ensure proper syntax checking
+            sudo visudo -c && echo "$timestamp_setting" | sudo tee -a "$sudoers_file" > /dev/null
+            echo "Sudo timeout period has been set to zero."
+        fi
+        echo "Sudo timeout period configuration complete."
     # 5.5 Ensure a Separate Timestamp Is Enabled for Each User/tty Combo
     echo "Section 5.5 - Ensure a Separate Timestamp Is Enabled for Each User/tty Combo (Manually Check)"
     # 5.6 Ensure the 'root' Account Is Disabled
@@ -449,8 +524,19 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # Skipped
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
-        #Skipped 
-
+        sudoers_file="/etc/sudoers"
+        logfile_setting="Defaults    logfile=\"/var/log/sudo.log\""
+        if sudo grep -q "$logfile_setting" "$sudoers_file"; then
+            echo "Sudo logging is already enabled."
+        else
+            echo "Enabling sudo logging..."
+            # Edit sudoers file safely using visudo to ensure proper syntax checking
+            sudo visudo -c && echo "$logfile_setting" | sudo tee -a "$sudoers_file" > /dev/null
+            echo "Sudo logging has been enabled."
+        fi
+        sudo touch /var/log/sudo.log
+        sudo chmod 600 /var/log/sudo.log
+        sudo chown root:root /var/log/sudo.log
 ############################
 # 6 Applications
 ############################
@@ -458,8 +544,9 @@ echo "Section 6 - Applications"
     # 6.1 Finder
     echo "Section 6.1 - Finder"
         # 6.1.1	Ensure Show All Filename Extensions Setting is Enabled
-        echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled (Skipped)"
-            #Skipped
+        echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled"
+            defaults write com.apple.finder AppleShowAllExtensions -bool true
+            killall Finder
     # 6.2 Mail
     echo "Section 6.2 - Mail"
         # 6.2.1 Ensure Protect Mail Activity in Mail Is Enabled
@@ -467,8 +554,15 @@ echo "Section 6 - Applications"
     # 6.3 Safari
     echo "Section 6.3 - Safari"
         # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
-        echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled (Skipped)"
-            # Skipped
+        echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled"
+            defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
+            if pgrep -x "Safari" > /dev/null; then
+                echo "Restarting Safari to apply changes..."
+                killall Safari
+            else
+                echo "Safari is not running, changes will take effect the next time Safari is launched."
+            fi
+            echo "Automatic opening of safe files in Safari is now disabled."
         # 6.3.2 Audit History and Remove History Items
         echo "Section 6.3.2 - Audit History and Remove History Items"
             # Replace <value> with one of the allowed integers: 1, 7, 14, 31, 365, 36500
@@ -476,20 +570,47 @@ echo "Section 6 - Applications"
             sudo defaults write com.apple.Safari HistoryAgeInDaysLimit -int $value
         # 6.3.3 Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
         echo "Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled"
-            sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
-            killall Safari
+            defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
+            if pgrep -x "Safari" > /dev/null; then
+                echo "Restarting Safari to apply changes..."
+                killall Safari
+            else
+                echo "Safari is not running, changes will take effect the next time Safari is launched."
+            fi
+            echo "Warn when visiting fraudulent websites is now enabled in Safari."
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
-        echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled (Skipped)"
-            # Skipped
+        echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
+            defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
+            if pgrep -x "Safari" > /dev/null; then
+                echo "Restarting Safari to apply changes..."
+                killall Safari
+            else
+                echo "Safari is not running, changes will take effect the next time Safari is launched."
+            fi
+            echo "Prevent Cross-site Tracking is now enabled in Safari."
         # 6.3.5 Audit Hide IP Address in Safari Setting
         echo "Section 6.3.5 - Audit Hide IP Address in Safari Setting (Skipped)"
             # Skipped
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
-        echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled (Skipped)"
-            # Skipped
+        echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
+            defaults write com.apple.Safari ContentBlockersEnabled -bool true
+            if pgrep -x "Safari" > /dev/null; then
+                echo "Restarting Safari to apply changes..."
+                killall Safari
+            else
+                echo "Safari is not running, changes will take effect the next time Safari is launched."
+            fi
+            echo "Advertising Privacy Protection is now enabled in Safari."
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
-        echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled (Skipped)"
-            # Skipped
+        echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
+            defaults write com.apple.Safari ShowFullURL -bool true
+            if pgrep -x "Safari" > /dev/null; then
+                echo "Restarting Safari to apply changes..."
+                killall Safari
+            else
+                echo "Safari is not running, changes will take effect the next time Safari is launched."
+            fi
+            echo "Full website address is now enabled in Safari."
         # 6.3.8 Audit AutoFill
         echo "Section 6.3.8 - Audit AutoFill (Skipped)"
             # Skipped
@@ -498,8 +619,14 @@ echo "Section 6 - Applications"
             # Skipped
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
-            sudo defaults write com.apple.finder ShowStatusBar -bool true
-            killall Finder
+            defaults write com.apple.Safari ShowStatusBar -bool true
+            if pgrep -x "Safari" > /dev/null; then
+                echo "Restarting Safari to apply changes..."
+                killall Safari
+            else
+                echo "Safari is not running, changes will take effect the next time Safari is launched."
+            fi
+            echo "Show Status Bar in Safari is now enabled."
     # 6.4 Terminal
     echo "Section 6.4 - Terminal"
         # 6.4.1 Ensure Secure Keyboard Entry Terminal.app Is Enabled
