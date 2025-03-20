@@ -1,44 +1,4 @@
-administrator@MacBookPro ~ % clear
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 administrator@MacBookPro ~ % sudo /Users/administrator/Downloads/macOS15_SecurityBaseline.sh
-Password:
-Sorry, try again.
 Password:
 Section 1 - Install Updates, Patches and Additional Security Software
 Section 1.1 - Ensure All Apple-provided Software Is Current
