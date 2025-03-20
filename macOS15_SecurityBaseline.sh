@@ -397,30 +397,9 @@ echo "Section 5 - System Access, Authentication and Authorization"
                 sudo /bin/chmod -R o-w "$apps"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
-        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder"
-            world_writable_dirs=$(sudo find /System -type d -perm -002 -print)
-            if [ -n "$world_writable_dirs" ]; then
-                echo "World-writable directories found:"
-                echo "$world_writable_dirs"
-            
-                # Loop through each directory and fix permissions
-                echo "$world_writable_dirs" | while read -r dir; do
-                    echo "Fixing permissions for: $dir"
-                    
-                    # Apply the chmod command to remove world-writable permission
-                    sudo chmod o-w "$dir"
-                    
-                    # Verify the permissions were fixed (Optional: print new permissions)
-                    new_permissions=$(ls -ld "$dir" | awk '{print $1}')
-                    echo "Updated permissions for $dir: $new_permissions"
-                done
-            
-                echo "All world-writable directories have been fixed. (FIXED)"
-            else
-                echo "No world-writable directories found in /System. (OK)"
-            fi
+        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
-        echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder (Skipped)"  
+        echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder"  
             world_writable_dirs=$(sudo find /Library -type d -perm -002)
             if [ -z "$world_writable_dirs" ]; then
                 echo "No world-writable directories found in /Library."
