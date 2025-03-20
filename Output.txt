@@ -34,7 +34,7 @@ Section 2.3.2 - Date & Time
 Section 2.3.2.1 - Ensure Set Time and Date Automatically Is Enabled
 Network Time is already on.
 Section 2.3.2.2 - Ensure Time Is Set Within Appropriate Limits
-+0.023647 +/- 0.011130 time.apple.com 2a01:b740:a16:3000::1f2
++0.039715 +/- 0.008992 time.apple.com 2a01:b740:a16:3000::1f2
 Section 2.3.3 - Sharing
 Section 2.3.3.1 - Ensure DVD or CD Sharing Is Disabled
 Boot-out failed: 3: No such process
@@ -64,9 +64,8 @@ Section 2.4.1 - Ensure Show Wi-Fi status in Menu Bar Is Enabled
 Section 2.4.2 - Ensure Show Bluetooth Status in Menu Bar Is Enabled
 Section 2.5 - Siri
 Section 2.5.1 - Audit Siri Settings
+2025-03-20 15:21:34.907 defaults[3226:87218] Unexpected argument -bool; leaving defaults unchanged.
 Section 2.5.2 - Ensure Listen for (Siri) Is Disabled
-No Siri preferences found for user: administrator
-No Siri preferences found for user: root
 Section 2.6 - Privacy & Security
 Section 2.6.1 - Location Services
 Section 2.6.1.1 - Ensure Location Services Is Enabled(Manually Check)
@@ -91,11 +90,10 @@ Section 2.6.7 - Audit Lockdown Mode (Manually Check)
 To audit Lockdown Mode on macOS 15 via Terminal, use the following command:
 sudo /usr/bin/defaults read /Library/Managed\ Preferences/com.apple.security.lockdownmode Enabled
 Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences
-System preferences already require an admin password.
 Section 2.7 - Desktop & Dock
 Section 2.7.1 - Ensure Screen Saver Corners Are Secure
-/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 255: Check: command not found
-/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 259: Add: command not found
+/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 229: Check: command not found
+/Users/administrator/Downloads/macOS15_SecurityBaseline.sh: line 233: Add: command not found
 Section 2.7.2 - Audit iPhone Mirroring
 Section 2.8 - Displays
 Section 2.8.1 - Audit Universal Control Settings
@@ -131,7 +129,6 @@ Section 2.17 - Internet Accounts
 Section 2.17.1 - Audit Internet Accounts for Authorized Use (Manually Check)
 Section 2.18 - Keyboard
 Section 2.18.1 - Ensure On-Device Dictation Is Enabled
-No matching processes were found
 Section 4 - Network Configurations
 Section 4.1 - Ensure Bonjour Advertising Services Is Disabled
 Section 4.2 - Ensure HTTP Server Is Disabled
@@ -168,7 +165,7 @@ Section 5.2.4 - Ensure Complex Password Must Contain Numeric Character Is Config
 Section 5.2.5 - Ensure Complex Password Must Contain Special Character Is Configured (Skipped)
 Section 5.2.6 - Ensure Complex Password Must Contain Uppercase and Lowercase Characters Is Configured (Skipped)
 Section 5.2.7 - Ensure Password Age Is Configured (Skipped)
-Section 5.2.8 - Ensure Password History Is Configured (Skipped)
+Section 5.2.8 - Ensure Password History Is Configured
 Section 5.3 - Encryption
 Section 5.3.1 - Ensure all user storage APFS volumes are encrypted (Manually Check)
 Section 5.3.2 - Ensure all user storage CoreStorage volumes are encrypted  (Manually Check)
@@ -185,6 +182,8 @@ Section 5.10 - Ensure XProtect Is Running and Updated (Skipped)
 Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)
 Sudo logging is already enabled.
 chown: root: illegal group name
+Checking if sudo logging is enabled...
+Failed to configure sudo logging.
 Section 6 - Applications
 Section 6.1 - Finder
 Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled
