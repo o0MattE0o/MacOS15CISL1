@@ -11,9 +11,7 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool true
-        sudo defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool TRUE
+        defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -29,7 +27,8 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true
     # 1.7 Ensure Software Update Deferment Is Less Than or Equal to 30 Days
     echo "Section 1.7 - Ensure Software Update Deferment Is Less Than or Equal to 30 Days"
-        sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate enforcedSoftwareUpdateDelay -int 5  # No. Days Deferred
+       SOFTWARE_UPDATE_DELAY=5  # Set to a value between 1 and 30
+       sudo defaults write com.apple.applicationaccess enforcedSoftwareUpdateDelay -int "$SOFTWARE_UPDATE_DELAY"
     # 1.8 Ensure the System is Managed by a Mobile Device Management (MDM) Software
     echo "Section 1.8 - Ensure the System is Managed by a Mobile Device Management (MDM) Software (Manually Check)"
         #echo "Ensure Device is enrolled in Intune."
