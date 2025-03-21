@@ -108,7 +108,7 @@ echo "Section 2 - System Settings"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
             echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
-                #sudo systemsetup -setremotelogin off > /dev/null 2>&1
+                yes "yes" | sudo systemsetup -setremotelogin off
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
