@@ -13,7 +13,7 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
-        defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
+        sudo plutil -convert xml1 /Library/Preferences/com.apple.SoftwareUpdate.plist
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -134,14 +134,15 @@ echo "Section 2 - System Settings"
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
             echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
+                sudo defaults write /Library/Preferences/com.apple.Bluetooth PrefKeyServicesEnabled -int 0
                 for user in $(ls /Users); do
-                    # Skip system users that shouldn't have settings changed
+                    # Skip system accounts
                     if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
-                        # Disable Bluetooth Sharing for each user
                         echo "Disabling Bluetooth Sharing for user: $user"
-                        sudo -u "$user" /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
+                        sudo -u "$user" defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -int 0
                     fi
                 done
+                sudo launchctl kickstart -k system/com.apple.bluetoothd
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -173,16 +174,14 @@ echo "Section 2 - System Settings"
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
         echo "Section 2.5.1 - Audit Siri Settings"
+            #Ensure Ironwood Allowed is Set
             PLIST_FILE="$HOME/Library/Preferences/com.apple.ironwood.support.plist"
             IRONWOOD_KEY="Ironwood Allowed"
-            IRONWOOD_VALUE=true  # Change to false if needed
-            if [ ! -f "$PLIST_FILE" ]; then
-                echo "Creating new plist file: $PLIST_FILE"
-                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE"
-            else
-                echo "Updating existing plist file: $PLIST_FILE"
-                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE"
-            fi
+            IRONWOOD_VALUE=false  # Set to false for compliance
+            defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE" # Ensure the plist exists and set the correct value
+            defaults read "$PLIST_FILE" "$IRONWOOD_KEY" # Verify the value
+            #Disable Siri
+            sudo defaults write /Library/Preferences/com.apple.assistant.support.plist AllowAssistant -bool false
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
             sudo defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
@@ -334,8 +333,9 @@ echo "Section 2 - System Settings"
             sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            sudo /usr/bin/defaults write com.apple.screensaver askForPassword -int 1
-            sudo /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+            sudo defaults write com.apple.screensaver askForPassword -int 1
+            sudo defaults write /Library/Preferences/com.apple.screensaver askForPassword -int 1
+            sudo defaults write com.apple.screensaver askForPasswordDelay -int 5
             askForPassword=$(defaults read com.apple.screensaver askForPassword)
             askForPasswordDelay=$(defaults read com.apple.screensaver askForPasswordDelay)
             if [[ "$askForPassword" == "1" && "$askForPasswordDelay" == "5" ]]; then
@@ -467,6 +467,13 @@ echo "Section 5 - System Access, Authentication and Authorization"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
         echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
+            IFS=$'\n'  # Ensure the loop handles spaces in directory names properly
+            echo "Checking for world-writable directories in /System/Volumes/Data/System..."
+            for sysPermissions in $(find /System/Volumes/Data/System -type d -perm -2 2>/dev/null | grep -vE "downloadDir|locks"); do
+                echo "Removing world-writable permission from: $sysPermissions"
+                sudo chmod o-w "$sysPermissions"
+            done
+            echo "Completed fixing world-writable directories."
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
         echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder"  
             world_writable_dirs=$(sudo find /Library -type d -perm -002)
@@ -485,7 +492,10 @@ echo "Section 5 - System Access, Authentication and Authorization"
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5 policyAttributeMinutesUntilFailedAuthenticationReset=5"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributeMinutesUntilFailedAuthenticationReset=5"
+            sudo defaults write /Library/Preferences/com.apple.loginwindow maxFailedLoginAttempts -int 5
+            sudo defaults write /Library/Preferences/com.apple.loginwindow policyAttributeMinutesUntilFailedAuthenticationReset -int 5
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
             sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordMatches=14"
@@ -573,92 +583,45 @@ echo "Section 6 - Applications"
         echo "Section 6.2.1 - Ensure Protect Mail Activity in Mail Is Enabled (Manually Check)"
     # 6.3 Safari
     echo "Section 6.3 - Safari"
-        # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
+        # 6.3.1 Ensure Automatic Opening of Safe Files in Safari Is Disabled
         echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled"
             sudo defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
-            defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
-            if pgrep -x "Safari" > /dev/null; then
-                echo "Restarting Safari to apply changes..."
-                killall Safari
-            else
-                echo "Safari is not running, changes will take effect the next time Safari is launched."
-            fi
-            echo "Automatic opening of safe files in Safari is now disabled."
         # 6.3.2 Audit History and Remove History Items
         echo "Section 6.3.2 - Audit History and Remove History Items"
-            # Replace <value> with one of the allowed integers: 1, 7, 14, 31, 365, 36500
             value=31
             sudo defaults write com.apple.Safari HistoryAgeInDaysLimit -int $value
         # 6.3.3 Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
         echo "Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled"
             sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
-            defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
-            if pgrep -x "Safari" > /dev/null; then
-                echo "Restarting Safari to apply changes..."
-                killall Safari
-            else
-                echo "Safari is not running, changes will take effect the next time Safari is launched."
-            fi
-            echo "Warn when visiting fraudulent websites is now enabled in Safari."
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
         echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
-            sudo defaults write com.apple.Safari BlockStoragePolicy -int 2
-            defaults write com.apple.Safari BlockStoragePolicy -int 2
-            sudo defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
-            defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
-            sudo defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
-            defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
-            if pgrep -x "Safari" > /dev/null; then
-                echo "Restarting Safari to apply changes..."
-                killall Safari
-            else
-                echo "Safari is not running, changes will take effect the next time Safari is launched."
-            fi
-            echo "Prevent Cross-site Tracking is now enabled in Safari."
+            sudo defaults write com.apple.Safari BlockThirdPartyCookies -bool true
         # 6.3.5 Audit Hide IP Address in Safari Setting
-        echo "Section 6.3.5 - Audit Hide IP Address in Safari Setting (Skipped)"
-            # Skipped
+            # This will require a profile or manual configuration as it is not easily set via `defaults`.
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
         echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
-            sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
-            defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
-            sudo defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
-            defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
-            if pgrep -x "Safari" > /dev/null; then
-                echo "Restarting Safari to apply changes..."
-                killall Safari
-            else
-                echo "Safari is not running, changes will take effect the next time Safari is launched."
-            fi
-            echo "Advertising Privacy Protection is now enabled in Safari."
+            sudo defaults write com.apple.Safari PrivacyPreserveLogins -bool true
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
         echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
-            sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
-            defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
-            if pgrep -x "Safari" > /dev/null; then
-                echo "Restarting Safari to apply changes..."
-                killall Safari
-            else
-                echo "Safari is not running, changes will take effect the next time Safari is launched."
-            fi
-            echo "Full website address is now enabled in Safari."
+            sudo defaults write com.apple.Safari ShowFullURLInAddressBar -bool true
         # 6.3.8 Audit AutoFill
-        echo "Section 6.3.8 - Audit AutoFill (Skipped)"
-            # Skipped
+        echo "Section 6.3.8 - Audit AutoFill"
+            sudo defaults write com.apple.Safari AutoFillFromAddressBook -bool false
+            sudo defaults write com.apple.Safari AutoFillPasswords -bool false
+            sudo defaults write com.apple.Safari AutoFillCreditCardData -bool false
         # 6.3.9 Audit Pop-up Windows
-        echo "Section 6.3.9 - Audit Pop-up Windows (Skipped)"
-            # Skipped
+        echo "Section 6.3.9 - Audit Pop-up Windows"
+            sudo defaults write com.apple.Safari BlockPopups -bool true
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
-            sudo defaults write com.apple.finder ShowOverlayStatusBar -bool true
-            defaults write com.apple.finder ShowOverlayStatusBar -bool true
+            sudo defaults write com.apple.Safari ShowStatusBar -bool true
+            # Restart Safari to apply changes if it's running
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
             else
                 echo "Safari is not running, changes will take effect the next time Safari is launched."
             fi
-            echo "Show Status Bar in Safari is now enabled."
     # 6.4 Terminal
     echo "Section 6.4 - Terminal"
         # 6.4.1 Ensure Secure Keyboard Entry Terminal.app Is Enabled
