@@ -33,19 +33,19 @@ echo "Section 2 - System Settings"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.alf globalstate -int 2
         # 2.2.2	Ensure Firewall Stealth Mode Is Enabled
         echo "Section 2.2.2 - Ensure Firewall Stealth Mode Is Enabled"
-            sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+            sudo defaults write /Library/Preferences/com.apple.alf stealthenabled -int 1
     #2.3 General
     echo "Section 2.3 - General"
         # 2.3.1 AirDrop & Handoff
         echo "Section 2.3.1 - AirDrop & Handoff"
             # 2.3.1.1 Ensure AirDrop Is Disabled When Not Actively Transferring Files
             echo "Section 2.3.1.1 - Ensure AirDrop Is Disabled When Not Actively Transferring Files"
-                sudo defaults write "com.apple.NetworkBrowser" "DisableAirDrop" -bool true
-                killall Finder
+                sudo defaults write com.apple.applicationaccess allowAirDrop -bool false
+                defaults write com.apple.applicationaccess allowAirDrop -bool false
             # 2.3.1.2 Ensure AirPlay Receiver Is Disabled
             echo "Section 2.3.1.2 - Ensure AirPlay Receiver Is Disabled"
-                sudo defaults write /Library/Preferences/com.apple.airplay disableAirPlayReceiver -bool true
-                killall -HUP SystemUIServer
+                sudo defaults write com.apple.applicationaccess allowAirPlayIncomingRequests -bool false
+                defaults write com.apple.applicationaccess allowAirPlayIncomingRequests -bool false
         # 2.3.2 Date & Time
         echo "Section 2.3.2 - Date & Time"
                 # 2.3.2.1 Ensure Set Time and Date Automatically Is Enabled
@@ -73,7 +73,7 @@ echo "Section 2 - System Settings"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
             echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
-                sudo systemsetup -setremotelogin off > /dev/null 2>&1
+                yes "yes" | sudo systemsetup -setremotelogin off
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
@@ -99,8 +99,14 @@ echo "Section 2 - System Settings"
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
             echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
-                /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false > /dev/null 2>&1
-                sudo launchctl kickstart -k system/com.apple.bluetoothd > /dev/null 2>&1
+                for user in $(ls /Users); do
+                    # Skip system users that shouldn't have settings changed
+                    if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
+                        # Disable Bluetooth Sharing for each user
+                        echo "Disabling Bluetooth Sharing for user: $user"
+                        sudo -u "$user" /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
+                    fi
+                done
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -122,8 +128,7 @@ echo "Section 2 - System Settings"
     echo "Section 2.4 - Control Center"
         # 2.4.1 Ensure Show Wi-Fi status in Menu Bar Is Enabled
         echo "Section 2.4.1 - Ensure Show Wi-Fi status in Menu Bar Is Enabled"
-            sudo defaults write com.apple.systemuiserver menuExtras -array-add "/System/Library/CoreServices/Menu Extras/AirPort.menu"
-            killall SystemUIServer
+            sudo defaults write com.apple.controlcenter WiFi -int 18
         # 2.4.2	Ensure Show Bluetooth Status in Menu Bar Is Enabled
         echo "Section 2.4.2 - Ensure Show Bluetooth Status in Menu Bar Is Enabled"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
@@ -133,20 +138,19 @@ echo "Section 2 - System Settings"
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
         echo "Section 2.5.1 - Audit Siri Settings"
-            /usr/bin/defaults write com.apple.assistant.support "Assistant Enabled" -bool false > /dev/null 2>&1
-            killall Siri > /dev/null 2>&1
-            killall Assistant > /dev/null 2>&1
+            PLIST_FILE="$HOME/Library/Preferences/com.apple.ironwood.support.plist"
+            IRONWOOD_KEY="Ironwood Allowed"
+            IRONWOOD_VALUE=true  # Change to false if needed
+            if [ ! -f "$PLIST_FILE" ]; then
+                echo "Creating new plist file: $PLIST_FILE"
+                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE"
+            else
+                echo "Updating existing plist file: $PLIST_FILE"
+                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE"
+            fi
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
-            for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
-                user_pref_path="/Users/$user/Library/Preferences/com.apple.assistant.support"
-                if [ -f "$user_pref_path" ]; then
-                    sudo -u "$user" /usr/bin/defaults write "$user_pref_path" 'Assistant Enabled' -bool false
-                    echo "Disabled Listen for Siri for user: $user"
-                else
-                    echo "No Siri preferences found for user: $user"
-                fi
-            done
+            sudo defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
     # 2.6 Privacy & Security
     echo "Section 2.6 - Privacy & Security"
         # 2.6.1 Location Services
@@ -197,21 +201,54 @@ echo "Section 2 - System Settings"
             echo "sudo /usr/bin/defaults read /Library/Managed\ Preferences/com.apple.security.lockdownmode Enabled"
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
         echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences"
-            current_setting=$(sudo security authorizationdb read system.preferences 2>/dev/null)
-            if [ $? -eq 0 ]; then
-                if echo "$current_setting" | grep -q '"shared" = true'; then
-                    echo "System preferences are accessible without an admin password. Changing to require admin password."
-                    sudo security authorizationdb write system.preferences authenticate-admin
-                    echo "System preferences now require an admin password."
+            authDBs=(
+                "system.preferences"
+                "system.preferences.energysaver"
+                "system.preferences.network"
+                "system.preferences.printing"
+                "system.preferences.sharing"
+                "system.preferences.softwareupdate"
+                "system.preferences.startupdisk"
+                "system.preferences.timemachine"
+            )
+            
+            for section in "${authDBs[@]}"; do
+                TMP_PLIST="/tmp/$section.plist"
+                /usr/bin/security -q authorizationdb read "$section" > "$TMP_PLIST"
+                class_key_value=$(/usr/libexec/PlistBuddy -c "Print :class" "$TMP_PLIST" 2>&1)
+                if [[ "$class_key_value" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :class string user" "$TMP_PLIST"
                 else
-                    echo "System preferences already require an admin password."
+                    /usr/libexec/PlistBuddy -c "Set :class user" "$TMP_PLIST"
                 fi
-            else
-                echo "Error: Unable to read system.preferences authorization. The rule may not exist."
-                echo "Attempting to configure system preferences to require admin password."
-                sudo security authorizationdb write system.preferences authenticate-admin
-                echo "System preferences now require an admin password."
-            fi
+                key_value=$(/usr/libexec/PlistBuddy -c "Print :shared" "$TMP_PLIST" 2>&1)
+                if [[ "$key_value" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :shared bool false" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :shared false" "$TMP_PLIST"
+                fi
+                auth_user_key=$(/usr/libexec/PlistBuddy -c "Print :authenticate-user" "$TMP_PLIST" 2>&1)
+                if [[ "$auth_user_key" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :authenticate-user bool true" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :authenticate-user true" "$TMP_PLIST"
+                fi
+                session_owner_key=$(/usr/libexec/PlistBuddy -c "Print :session-owner" "$TMP_PLIST" 2>&1)
+                if [[ "$session_owner_key" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :session-owner bool false" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :session-owner false" "$TMP_PLIST"
+                fi
+                group_key=$(/usr/libexec/PlistBuddy -c "Print :group" "$TMP_PLIST" 2>&1)
+                if [[ "$group_key" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :group string admin" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :group admin" "$TMP_PLIST"
+                fi
+                /usr/bin/security -q authorizationdb write "$section" < "$TMP_PLIST"
+                rm -f "$TMP_PLIST"
+                echo "Policy updated for $section"
+            done
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -220,7 +257,6 @@ echo "Section 2 - System Settings"
             if ! sudo /usr/libexec/PlistBuddy -c "Print :Forced" /Library/Preferences/com.apple.dock.plist &>/dev/null; then
                 sudo /usr/libexec/PlistBuddy -c "Add :Forced array" /Library/Preferences/com.apple.dock.plist
             fi
-            Add the necessary entries
             sudo /usr/libexec/PlistBuddy -c "Add :Forced:0 dict" /Library/Preferences/com.apple.dock.plist
             sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings dict" /Library/Preferences/com.apple.dock.plist
             sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-bl-corner integer 6" /Library/Preferences/com.apple.dock.plist
@@ -263,8 +299,17 @@ echo "Section 2 - System Settings"
             sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            sudo defaults write "com.apple.screensaver" "askForPassword" -int 1
-            sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
+            sudo /usr/bin/defaults write com.apple.screensaver askForPassword -int 1
+            sudo /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+            askForPassword=$(defaults read com.apple.screensaver askForPassword)
+            askForPasswordDelay=$(defaults read com.apple.screensaver askForPasswordDelay)
+            if [[ "$askForPassword" == "1" && "$askForPasswordDelay" == "5" ]]; then
+                echo "Password requirement after screen saver or display off is correctly configured."
+            else
+                echo "There was an issue applying the settings."
+            fi
+            killall cfprefsd
+            echo "Settings have been applied and preferences refreshed."
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
@@ -325,8 +370,27 @@ echo "Section 2 - System Settings"
     echo "Section 2.18 - Keyboard"
         # 2.18.1 Ensure On-Device Dictation Is Enabled
         echo "Section 2.18.1 - Ensure On-Device Dictation Is Enabled"
-            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMEnabled -bool true
-            sudo defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMLocaleIdentifier -string "en_US"
+            sudo defaults write com.apple.applicationaccess forceOnDeviceOnlyDictation -bool true
             killall SystemUIServer
+            
+############################
+# 3 Logging and Auditing
+############################
+#Skipped due to errors login into MacOS after applying
+
+############################    
+# 4 Network Configurations
+############################
+echo "Section 4 - Network Configurations"
+    # 4.1 Ensure Bonjour Advertising Services Is Disabled
+    echo "Section 4.1 - Ensure Bonjour Advertising Services Is Disabled"
+        sudo /usr/bin/defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
+    # 4.2 Ensure HTTP Server Is Disabled
+    echo "Section 4.2 - Ensure HTTP Server Is Disabled"
+        sudo launchctl unload -w /System/Library/LaunchDaemons/org.apache.httpd.plist
+    # 4.3 Ensure NFS Server Is Disabled
+    echo "Section 4.3 - Ensure NFS Server Is Disabled"
+        sudo launchctl disable system/com.apple.nfsd
+        
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
