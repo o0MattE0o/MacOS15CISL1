@@ -108,7 +108,7 @@ echo "Section 2 - System Settings"
                 sudo cupsctl --no-share-printers
             # 2.3.3.5 - Ensure Remote Login Is Disabled
             echo "Section 2.3.3.5 - Ensure Remote Login Is Disabled"
-                sudo systemsetup -setremotelogin off > /dev/null 2>&1
+                #sudo systemsetup -setremotelogin off > /dev/null 2>&1
             # 2.3.3.6 Ensure Remote Management Is Disabled
             echo "Section 2.3.3.6 - Ensure Remote Management Is Disabled"
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -stop
@@ -552,27 +552,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # Skipped
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
-        LOG_FILE="/var/log/sudo_config.log"
-        echo "Starting sudo logging configuration..." | tee -a "$LOG_FILE"
-        if /usr/bin/sudo -V | /usr/bin/grep -q "Log when a command is allowed by sudoers"; then
-            echo "Sudo logging is already enabled." | tee -a "$LOG_FILE"
-        else
-            echo "Backing up /etc/sudoers to /etc/sudoers.bak" | tee -a "$LOG_FILE"
-            sudo cp /etc/sudoers /etc/sudoers.bak
-            if sudo grep -q "Defaults log_allowed" /etc/sudoers; then
-                echo "'log_allowed' is already set in sudoers." | tee -a "$LOG_FILE"
-            else
-                echo "Adding 'Defaults log_allowed' to /etc/sudoers" | tee -a "$LOG_FILE"
-                echo "Defaults log_allowed" | sudo tee -a /etc/sudoers > /dev/null
-            fi
-            echo "Reloading sudo settings..." | tee -a "$LOG_FILE"
-            sudo killall -HUP sudo || echo "Could not reload sudo, a restart may be needed." | tee -a "$LOG_FILE"
-            if /usr/bin/sudo -V | /usr/bin/grep -q "Log when a command is allowed by sudoers"; then
-                echo "Sudo logging enabled successfully!" | tee -a "$LOG_FILE"
-            else
-                echo "Failed to enable sudo logging. Check /etc/sudoers manually." | tee -a "$LOG_FILE"
-            fi
-        fi
+    
 ############################
 # 6 Applications
 ############################
