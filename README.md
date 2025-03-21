@@ -7,14 +7,14 @@ CHMOD 755 ~/Downloads/macOS15_SecurityBaseline.sh
 CIS Apple macOS 15.0 Sequoia Benchmark v1.0.0
 
 1. Install Updates, Patches, and Additional Security Software
-- Ensure all Apple-provided software is current
-- Ensure auto-update is enabled
-- Ensure download new updates when available is enabled
-- Ensure install of macOS updates is enabled
-- Ensure install application updates from the App Store is enabled
-- Ensure install security responses and system files is enabled
-- Ensure software update deferment is less than or equal to 30 days
-- Ensure the system is managed by a Mobile Device Management (MDM) software
+  - Ensure all Apple-provided software is current
+  - Ensure auto-update is enabled
+  - Ensure download new updates when available is enabled
+  - Ensure install of macOS updates is enabled
+  - Ensure install application updates from the App Store is enabled
+  - Ensure install security responses and system files is enabled
+  - Ensure software update deferment is less than or equal to 30 days
+  - Ensure the system is managed by a Mobile Device Management (MDM) software
 
 2. System Settings
 - Apple Account (iCloud, App Store Password Settings)
