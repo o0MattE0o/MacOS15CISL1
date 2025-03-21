@@ -13,6 +13,7 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
+        defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -133,8 +134,14 @@ echo "Section 2 - System Settings"
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
             echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
-                sudo defaults write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
-                defaults write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
+                for user in $(ls /Users); do
+                    # Skip system users that shouldn't have settings changed
+                    if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
+                        # Disable Bluetooth Sharing for each user
+                        echo "Disabling Bluetooth Sharing for user: $user"
+                        sudo -u "$user" /usr/bin/defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -bool false
+                    fi
+                done
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -166,8 +173,16 @@ echo "Section 2 - System Settings"
     echo "Section 2.5 - Siri"
         # 2.5.1	Audit Siri Settings
         echo "Section 2.5.1 - Audit Siri Settings"
-            sudo defaults write /Library/Preferences/com.apple.ironwood.support Ironwood Allowed -bool true
-            sudo defaults write com.apple.applicationaccess allowAssistant -bool true
+            PLIST_FILE="$HOME/Library/Preferences/com.apple.ironwood.support.plist"
+            IRONWOOD_KEY="Ironwood Allowed"
+            IRONWOOD_VALUE=true  # Change to false if needed
+            if [ ! -f "$PLIST_FILE" ]; then
+                echo "Creating new plist file: $PLIST_FILE"
+                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE"
+            else
+                echo "Updating existing plist file: $PLIST_FILE"
+                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE"
+            fi
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
         echo "Section 2.5.2 - Ensure Listen for (Siri) Is Disabled"
             sudo defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
@@ -221,8 +236,54 @@ echo "Section 2 - System Settings"
             echo "sudo /usr/bin/defaults read /Library/Managed\ Preferences/com.apple.security.lockdownmode Enabled"
         # 2.6.8 Ensure an Administrator Password Is Required to Access System-Wide Preferences
         echo "Section 2.6.8 - Ensure an Administrator Password Is Required to Access System-Wide Preferences"
-            sudo defaults write /Library/Preferences/com.apple.systempreferences SecurityAdmin -bool true
-
+            authDBs=(
+                "system.preferences"
+                "system.preferences.energysaver"
+                "system.preferences.network"
+                "system.preferences.printing"
+                "system.preferences.sharing"
+                "system.preferences.softwareupdate"
+                "system.preferences.startupdisk"
+                "system.preferences.timemachine"
+            )
+            
+            for section in "${authDBs[@]}"; do
+                TMP_PLIST="/tmp/$section.plist"
+                /usr/bin/security -q authorizationdb read "$section" > "$TMP_PLIST"
+                class_key_value=$(/usr/libexec/PlistBuddy -c "Print :class" "$TMP_PLIST" 2>&1)
+                if [[ "$class_key_value" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :class string user" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :class user" "$TMP_PLIST"
+                fi
+                key_value=$(/usr/libexec/PlistBuddy -c "Print :shared" "$TMP_PLIST" 2>&1)
+                if [[ "$key_value" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :shared bool false" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :shared false" "$TMP_PLIST"
+                fi
+                auth_user_key=$(/usr/libexec/PlistBuddy -c "Print :authenticate-user" "$TMP_PLIST" 2>&1)
+                if [[ "$auth_user_key" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :authenticate-user bool true" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :authenticate-user true" "$TMP_PLIST"
+                fi
+                session_owner_key=$(/usr/libexec/PlistBuddy -c "Print :session-owner" "$TMP_PLIST" 2>&1)
+                if [[ "$session_owner_key" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :session-owner bool false" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :session-owner false" "$TMP_PLIST"
+                fi
+                group_key=$(/usr/libexec/PlistBuddy -c "Print :group" "$TMP_PLIST" 2>&1)
+                if [[ "$group_key" == *"Does Not Exist"* ]]; then
+                    /usr/libexec/PlistBuddy -c "Add :group string admin" "$TMP_PLIST"
+                else
+                    /usr/libexec/PlistBuddy -c "Set :group admin" "$TMP_PLIST"
+                fi
+                /usr/bin/security -q authorizationdb write "$section" < "$TMP_PLIST"
+                rm -f "$TMP_PLIST"
+                echo "Policy updated for $section"
+            done
     # 2.7 Desktop & Dock
     echo "Section 2.7 - Desktop & Dock"
         # 2.7.1 Ensure Screen Saver Corners Are Secure
@@ -231,7 +292,6 @@ echo "Section 2 - System Settings"
             if ! sudo /usr/libexec/PlistBuddy -c "Print :Forced" /Library/Preferences/com.apple.dock.plist &>/dev/null; then
                 sudo /usr/libexec/PlistBuddy -c "Add :Forced array" /Library/Preferences/com.apple.dock.plist
             fi
-            Add the necessary entries
             sudo /usr/libexec/PlistBuddy -c "Add :Forced:0 dict" /Library/Preferences/com.apple.dock.plist
             sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings dict" /Library/Preferences/com.apple.dock.plist
             sudo /usr/libexec/PlistBuddy -c "Add :Forced:0:mcx_preference_settings:wvous-bl-corner integer 6" /Library/Preferences/com.apple.dock.plist
@@ -274,8 +334,17 @@ echo "Section 2 - System Settings"
             sudo defaults -currentHost write com.apple.screensaver idleTime -int 1200
         # 2.10.2 Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately
         echo "Section 2.10.2 - Ensure Require Password After Screen Saver Begins or Display Is Turned Off Is Enabled for 5 Seconds or Immediately"
-            defaults write "com.apple.screensaver" "askForPassword" -int 1
-            sudo defaults write "com.apple.screensaver" "askForPasswordDelay" -int 5
+            sudo /usr/bin/defaults write com.apple.screensaver askForPassword -int 1
+            sudo /usr/bin/defaults write com.apple.screensaver askForPasswordDelay -int 5
+            askForPassword=$(defaults read com.apple.screensaver askForPassword)
+            askForPasswordDelay=$(defaults read com.apple.screensaver askForPasswordDelay)
+            if [[ "$askForPassword" == "1" && "$askForPasswordDelay" == "5" ]]; then
+                echo "Password requirement after screen saver or display off is correctly configured."
+            else
+                echo "There was an issue applying the settings."
+            fi
+            killall cfprefsd
+            echo "Settings have been applied and preferences refreshed."
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
             sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
@@ -416,8 +485,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributeMinutesUntilFailedAuthenticationReset=1"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5 policyAttributeMinutesUntilFailedAuthenticationReset=5"
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
             sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordMatches=14"
@@ -438,7 +506,7 @@ echo "Section 5 - System Access, Authentication and Authorization"
             # Skipped
         # 5.2.8 Ensure Password History Is Configured
         echo "Section 5.2.8 - Ensure Password History Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordHistoryDepth=15"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
     # 5.3 Encryption
     echo "Section 5.3 - Encryption"
         # 5.3.1 Ensure all user storage APFS volumes are encrypted
@@ -484,25 +552,26 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # Skipped
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
-        sudoers_file="/etc/sudoers"
-        logfile_setting="Defaults logfile=\"/var/log/sudo.log\""
-        if sudo grep -q "$logfile_setting" "$sudoers_file"; then
-            echo "Sudo logging is already enabled."
+        LOG_FILE="/var/log/sudo_config.log"
+        echo "Starting sudo logging configuration..." | tee -a "$LOG_FILE"
+        if /usr/bin/sudo -V | /usr/bin/grep -q "Log when a command is allowed by sudoers"; then
+            echo "Sudo logging is already enabled." | tee -a "$LOG_FILE"
         else
-            echo "Enabling sudo logging..."
-            # Edit sudoers file safely using visudo to ensure proper syntax checking
-            sudo visudo -c && echo "$logfile_setting" | sudo tee -a "$sudoers_file" > /dev/null
-            echo "Sudo logging has been enabled."
-        fi
-        sudo touch /var/log/sudo.log
-        sudo chmod 600 /var/log/sudo.log
-        sudo chown root:root /var/log/sudo.log
-        echo "Checking if sudo logging is enabled..."
-        sudo -V | grep "logfile"
-        if sudo -V | grep -q "logfile=\"/var/log/sudo.log\""; then
-            echo "Sudo logging is correctly configured."
-        else
-            echo "Failed to configure sudo logging."
+            echo "Backing up /etc/sudoers to /etc/sudoers.bak" | tee -a "$LOG_FILE"
+            sudo cp /etc/sudoers /etc/sudoers.bak
+            if sudo grep -q "Defaults log_allowed" /etc/sudoers; then
+                echo "'log_allowed' is already set in sudoers." | tee -a "$LOG_FILE"
+            else
+                echo "Adding 'Defaults log_allowed' to /etc/sudoers" | tee -a "$LOG_FILE"
+                echo "Defaults log_allowed" | sudo tee -a /etc/sudoers > /dev/null
+            fi
+            echo "Reloading sudo settings..." | tee -a "$LOG_FILE"
+            sudo killall -HUP sudo || echo "Could not reload sudo, a restart may be needed." | tee -a "$LOG_FILE"
+            if /usr/bin/sudo -V | /usr/bin/grep -q "Log when a command is allowed by sudoers"; then
+                echo "Sudo logging enabled successfully!" | tee -a "$LOG_FILE"
+            else
+                echo "Failed to enable sudo logging. Check /etc/sudoers manually." | tee -a "$LOG_FILE"
+            fi
         fi
 ############################
 # 6 Applications
@@ -512,8 +581,12 @@ echo "Section 6 - Applications"
     echo "Section 6.1 - Finder"
         # 6.1.1	Ensure Show All Filename Extensions Setting is Enabled
         echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled"
-            sudo defaults write com.apple.finder AppleShowAllExtensions -bool true
-            defaults write com.apple.finder AppleShowAllExtensions -bool true
+            for user in $(ls /Users); do
+                if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
+                    echo "Enabling 'Show All Filename Extensions' for user: $user"
+                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Preferences/.GlobalPreferences.plist AppleShowAllExtensions -bool true
+                fi
+            done
     # 6.2 Mail
     echo "Section 6.2 - Mail"
         # 6.2.1 Ensure Protect Mail Activity in Mail Is Enabled
@@ -523,6 +596,7 @@ echo "Section 6 - Applications"
         # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
         echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled"
             sudo defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
+            defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -538,6 +612,7 @@ echo "Section 6 - Applications"
         # 6.3.3 Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
         echo "Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled"
             sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
+            defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -547,9 +622,12 @@ echo "Section 6 - Applications"
             echo "Warn when visiting fraudulent websites is now enabled in Safari."
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
         echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
-            sudo defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 2
             sudo defaults write com.apple.Safari BlockStoragePolicy -int 2
-            sudo defaults write -g WebKitPreferences.storageBlockingPolicy -int 2
+            defaults write com.apple.Safari BlockStoragePolicy -int 2
+            sudo defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
+            defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
+            sudo defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
+            defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -563,7 +641,9 @@ echo "Section 6 - Applications"
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
         echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
             sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
+            defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
             sudo defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
+            defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -573,6 +653,7 @@ echo "Section 6 - Applications"
             echo "Advertising Privacy Protection is now enabled in Safari."
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
         echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
+            sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
             defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
@@ -590,6 +671,7 @@ echo "Section 6 - Applications"
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
             sudo defaults write com.apple.finder ShowOverlayStatusBar -bool true
+            defaults write com.apple.finder ShowOverlayStatusBar -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
