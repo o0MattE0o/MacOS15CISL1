@@ -40,24 +40,9 @@ echo "Section 5 - System Access, Authentication and Authorization"
                 sudo /bin/chmod -R o-w "$apps"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
-        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder"
-            world_writable_dirs=$(sudo find /System -type d -perm -002 -print)
-            if [ -n "$world_writable_dirs" ]; then
-                echo "World-writable directories found:"
-                echo "$world_writable_dirs"
-                
-                # Loop through and fix permissions
-                echo "$world_writable_dirs" | while read -r dir; do
-                    echo "Fixing permissions for $dir"
-                    sudo chmod o-w "$dir"
-                done
-                
-                echo "All world-writable directories have been fixed. (FIXED)"
-            else
-                echo "No world-writable directories found in /System. (OK)"
-            fi
+        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
         # 5.1.7 Ensure No World Writable Folders Exist in the Library Folder
-        echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder (Skipped)"  
+        echo "Section 5.1.7 - Ensure No World Writable Folders Exist in the Library Folder"  
             world_writable_dirs=$(sudo find /Library -type d -perm -002)
             if [ -z "$world_writable_dirs" ]; then
                 echo "No world-writable directories found in /Library."
@@ -74,10 +59,10 @@ echo "Section 5 - System Access, Authentication and Authorization"
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
         echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5 policyAttributeMinutesUntilFailedAuthenticationReset=5"
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
-            # Skipped
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordMatches=14"
         # 5.2.3 Ensure Complex Password Must Contain Alphabetic Characters Is Configured
         echo "Section 5.2.3 - Ensure Complex Password Must Contain Alphabetic Characters Is Configured (Skipped)"
             # Skipped
@@ -94,8 +79,8 @@ echo "Section 5 - System Access, Authentication and Authorization"
         echo "Section 5.2.7 - Ensure Password Age Is Configured (Skipped)"
             # Skipped
         # 5.2.8 Ensure Password History Is Configured
-        echo "Section 5.2.8 - Ensure Password History Is Configured (Skipped)"
-            # Skipped
+        echo "Section 5.2.8 - Ensure Password History Is Configured"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "usingHistory=15"
     # 5.3 Encryption
     echo "Section 5.3 - Encryption"
         # 5.3.1 Ensure all user storage APFS volumes are encrypted
@@ -141,19 +126,5 @@ echo "Section 5 - System Access, Authentication and Authorization"
         # Skipped
     # 5.11 Ensure Logging Is Enabled for Sudo
     echo "Section 5.11 - Ensure Logging Is Enabled for Sudo (Skipped)"
-        sudoers_file="/etc/sudoers"
-        logfile_setting="Defaults    logfile=\"/var/log/sudo.log\""
-        if sudo grep -q "$logfile_setting" "$sudoers_file"; then
-            echo "Sudo logging is already enabled."
-        else
-            echo "Enabling sudo logging..."
-            # Edit sudoers file safely using visudo to ensure proper syntax checking
-            sudo visudo -c && echo "$logfile_setting" | sudo tee -a "$sudoers_file" > /dev/null
-            echo "Sudo logging has been enabled."
-        fi
-        sudo touch /var/log/sudo.log
-        sudo chmod 600 /var/log/sudo.log
-        sudo chown root:root /var/log/sudo.log
-
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
