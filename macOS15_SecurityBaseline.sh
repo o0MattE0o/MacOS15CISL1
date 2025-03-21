@@ -13,7 +13,6 @@ echo "Section 1 - Install Updates, Patches and Additional Security Software"
     # 1.2 Ensure Auto Update Is Enabled
     echo "Section 1.2 - Ensure Auto Update Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
-        sudo plutil -convert xml1 /Library/Preferences/com.apple.SoftwareUpdate.plist
     # 1.3 Ensure Download New Updates When Available Is Enabled
     echo "Section 1.3 - Ensure Download New Updates When Available Is Enabled"
         sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true 
@@ -134,15 +133,21 @@ echo "Section 2 - System Settings"
                 done
             # 2.3.3.11 Ensure Bluetooth Sharing Is Disabled
             echo "Section 2.3.3.11 - Ensure Bluetooth Sharing Is Disabled"
-                sudo defaults write /Library/Preferences/com.apple.Bluetooth PrefKeyServicesEnabled -int 0
-                for user in $(ls /Users); do
-                    # Skip system accounts
-                    if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
-                        echo "Disabling Bluetooth Sharing for user: $user"
-                        sudo -u "$user" defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -int 0
+            sudo defaults write /Library/Preferences/com.apple.Bluetooth PrefKeyServicesEnabled -int 0 # Set the preference for the system
+            for user in $(ls /Users); do # Loop through each user and set the preference
+                # Skip system accounts
+                if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
+                    echo "Disabling Bluetooth Sharing for user: $user"
+                    if sudo -u "$user" defaults -currentHost read com.apple.Bluetooth PrefKeyServicesEnabled &>/dev/null; then # Check if the preference key exists for the user
+                        sudo -u "$user" defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -int 0 # If the key exists, set it to 0
+                    else
+                        sudo -u "$user" defaults -currentHost write com.apple.Bluetooth PrefKeyServicesEnabled -int 0 # If the key does not exist, create it and set it to 0
                     fi
-                done
-                sudo launchctl kickstart -k system/com.apple.bluetoothd
+                fi
+            done
+
+            # Refresh the Bluetooth daemon
+            sudo launchctl kickstart -k system/com.apple.bluetoothd
             # 2.3.3.12 Ensure Computer Name Does Not Contain PII or Protected Organizational Information
             echo "Section 2.3.3.12 - Ensure Computer Name Does Not Contain PII or Protected Organizational Information (Manually Check)"
         # 2.3.4 Time Machine
@@ -172,14 +177,17 @@ echo "Section 2 - System Settings"
             done
     #2.5 Siri
     echo "Section 2.5 - Siri"
-        # 2.5.1	Audit Siri Settings
+        # 2.5.1 Audit Siri Settings
         echo "Section 2.5.1 - Audit Siri Settings"
             #Ensure Ironwood Allowed is Set
             PLIST_FILE="$HOME/Library/Preferences/com.apple.ironwood.support.plist"
             IRONWOOD_KEY="Ironwood Allowed"
-            IRONWOOD_VALUE=false  # Set to false for compliance
-            defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE" # Ensure the plist exists and set the correct value
-            defaults read "$PLIST_FILE" "$IRONWOOD_KEY" # Verify the value
+            IRONWOOD_VALUE=false # Set to false for compliance
+            if defaults read "$PLIST_FILE" "$IRONWOOD_KEY" &>/dev/null; then # Check if the preference key exists for Ironwood Allowed
+                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE" # If the key exists, set it to false
+            else
+                defaults write "$PLIST_FILE" "$IRONWOOD_KEY" -bool "$IRONWOOD_VALUE" # If the key does not exist, create it and set it to false
+            fi
             #Disable Siri
             sudo defaults write /Library/Preferences/com.apple.assistant.support.plist AllowAssistant -bool false
         # 2.5.2 Ensure Listen for (Siri) Is Disabled
@@ -466,10 +474,10 @@ echo "Section 5 - System Access, Authentication and Authorization"
                 sudo /bin/chmod -R o-w "$apps"
             done
         # 5.1.6 Ensure No World Writable Folders Exist in the System Folder
-        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder (Skipped)"
-            IFS=$'\n'  # Ensure the loop handles spaces in directory names properly
+        echo "Section 5.1.6 - Ensure No World Writable Folders Exist in the System Folder"
+            IFS=$'\n' # Ensure the loop handles spaces in directory names properly
             echo "Checking for world-writable directories in /System/Volumes/Data/System..."
-            for sysPermissions in $(find /System/Volumes/Data/System -type d -perm -2 2>/dev/null | grep -vE "downloadDir|locks"); do
+            for sysPermissions in $(find /System/Volumes/Data/System -type d -perm -2 2>/dev/null | grep -vE "downloadDir|locks"); do # Find and fix world-writable directories
                 echo "Removing world-writable permission from: $sysPermissions"
                 sudo chmod o-w "$sysPermissions"
             done
@@ -491,11 +499,17 @@ echo "Section 5 - System Access, Authentication and Authorization"
     # 5.2 Password Management
     echo "Section 5.2 - Password Management"
         # 5.2.1 Ensure Password Account Lockout Threshold Is Configured
-        echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5"
-            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributeMinutesUntilFailedAuthenticationReset=5"
-            sudo defaults write /Library/Preferences/com.apple.loginwindow maxFailedLoginAttempts -int 5
-            sudo defaults write /Library/Preferences/com.apple.loginwindow policyAttributeMinutesUntilFailedAuthenticationReset -int 5
+            echo "Section 5.2.1 - Ensure Password Account Lockout Threshold Is Configured"
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "maxFailedLoginAttempts=5" # Set the maximum number of failed login attempts
+            sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributeMinutesUntilFailedAuthenticationReset=5" # Set the minutes until failed authentication reset
+            # Verify the settings
+            maxFailedLoginAttempts=$(sudo /usr/bin/pwpolicy -getaccountpolicies 2> /dev/null | /usr/bin/tail +2 | /usr/bin/xmllint --xpath '//dict/key[text()="policyAttributeMaximumFailedAuthentications"]/following-sibling::integer[1]/text()' -)
+            policyAttributeMinutesUntilFailedAuthenticationReset=$(sudo /usr/bin/pwpolicy -getaccountpolicies | /usr/bin/grep -A1 "policyAttributeMinutesUntilFailedAuthenticationReset" | /usr/bin/tail -1 | /usr/bin/sed 's/[^0-9]*//g')
+            if [[ "$maxFailedLoginAttempts" == "5" && "$policyAttributeMinutesUntilFailedAuthenticationReset" == "5" ]]; then
+                echo "Password account lockout threshold is configured correctly."
+            else
+                echo "There was an issue configuring the password account lockout threshold."
+            fi
         # 5.2.2 Ensure Password Minimum Length Is Configured
         echo "Section 5.2.2 - Ensure Password Minimum Length Is Configured"
             sudo /usr/bin/pwpolicy -n /Local/Default -setglobalpolicy "policyAttributePasswordMatches=14"
@@ -595,7 +609,9 @@ echo "Section 6 - Applications"
             sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
         echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
-            sudo defaults write com.apple.Safari BlockThirdPartyCookies -bool true
+            sudo defaults write com.apple.Safari BlockStoragePolicy -bool true
+            sudo defaults write com.apple.Safari WebKitStorageBlockingPolicy -bool true
+            sudo defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -bool true
         # 6.3.5 Audit Hide IP Address in Safari Setting
             # This will require a profile or manual configuration as it is not easily set via `defaults`.
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
