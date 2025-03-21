@@ -9,8 +9,12 @@ echo "Section 6 - Applications"
     echo "Section 6.1 - Finder"
         # 6.1.1	Ensure Show All Filename Extensions Setting is Enabled
         echo "Section 6.1.1 - Ensure Show All Filename Extensions Setting is Enabled"
-            defaults write com.apple.finder AppleShowAllExtensions -bool true
-            killall Finder
+            for user in $(ls /Users); do
+                if [[ "$user" != "Shared" && "$user" != "Guest" && -d "/Users/$user" ]]; then
+                    echo "Enabling 'Show All Filename Extensions' for user: $user"
+                    sudo -u "$user" /usr/bin/defaults write /Users/"$user"/Library/Preferences/.GlobalPreferences.plist AppleShowAllExtensions -bool true
+                fi
+            done
     # 6.2 Mail
     echo "Section 6.2 - Mail"
         # 6.2.1 Ensure Protect Mail Activity in Mail Is Enabled
@@ -19,6 +23,7 @@ echo "Section 6 - Applications"
     echo "Section 6.3 - Safari"
         # 6.3.1	Ensure Automatic Opening of Safe Files in Safari Is Disabled
         echo "Section 6.3.1 - Ensure Automatic Opening of Safe Files in Safari Is Disabled"
+            sudo defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
             defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
@@ -34,6 +39,7 @@ echo "Section 6 - Applications"
             sudo defaults write com.apple.Safari HistoryAgeInDaysLimit -int $value
         # 6.3.3 Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled
         echo "Section 6.3.3 - Ensure Warn When Visiting A Fraudulent Website in Safari Is Enabled"
+            sudo defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
             defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
@@ -44,6 +50,11 @@ echo "Section 6 - Applications"
             echo "Warn when visiting fraudulent websites is now enabled in Safari."
         # 6.3.4 Ensure Prevent Cross-site Tracking in Safari Is Enabled
         echo "Section 6.3.4 - Ensure Prevent Cross-site Tracking in Safari Is Enabled"
+            sudo defaults write com.apple.Safari BlockStoragePolicy -int 2
+            defaults write com.apple.Safari BlockStoragePolicy -int 2
+            sudo defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
+            defaults write com.apple.Safari WebKitPreferences.storageBlockingPolicy -int 1
+            sudo defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
             defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
@@ -57,7 +68,10 @@ echo "Section 6 - Applications"
             # Skipped
         # 6.3.6 Ensure Advertising Privacy Protection in Safari Is Enabled
         echo "Section 6.3.6 - Ensure Advertising Privacy Protection in Safari Is Enabled"
-            defaults write com.apple.Safari ContentBlockersEnabled -bool true
+            sudo defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
+            defaults write com.apple.Safari WebKitPreferences.privateClickMeasurementEnabled -bool true
+            sudo defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
+            defaults write -g WebKitPreferences.privateClickMeasurementEnabled -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -67,7 +81,8 @@ echo "Section 6 - Applications"
             echo "Advertising Privacy Protection is now enabled in Safari."
         # 6.3.7 Ensure Show Full Website Address in Safari Is Enabled
         echo "Section 6.3.7 - Ensure Show Full Website Address in Safari Is Enabled"
-            defaults write com.apple.Safari ShowFullURL -bool true
+            sudo defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+            defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -83,7 +98,8 @@ echo "Section 6 - Applications"
             # Skipped
         # 6.3.10 Ensure Show Status Bar Is Enabled
         echo "Section 6.3.10 - Ensure Show Status Bar Is Enabled"
-            defaults write com.apple.Safari ShowStatusBar -bool true
+            sudo defaults write com.apple.finder ShowOverlayStatusBar -bool true
+            defaults write com.apple.finder ShowOverlayStatusBar -bool true
             if pgrep -x "Safari" > /dev/null; then
                 echo "Restarting Safari to apply changes..."
                 killall Safari
@@ -98,5 +114,6 @@ echo "Section 6 - Applications"
             for user in $(dscl . list /Users | grep -v '^_' | grep -v 'daemon' | grep -v 'nobody'); do
                 sudo -u "$user" /usr/bin/defaults write com.apple.Terminal SecureKeyboardEntry -bool true
             done
+            
 echo "All CIS Policies have been applied, and this is the end of the script."
 exit 0
