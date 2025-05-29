@@ -4,6 +4,10 @@ sudo ~/Downloads/macOS15_SecurityBaseline.sh <br/>
 <br/>
 <h1>CIS Apple macOS 15.0 Sequoia Benchmark v1.0.0</h1>
 https://workbench.cisecurity.org/benchmarks/18636/ <br/>
+<br/>
+Tenable - 79% passrate
+<br/>
+
 
 <br/>
 <h3>1. Install Updates, Patches, and Additional Security Software</h3>
