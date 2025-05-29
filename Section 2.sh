@@ -312,7 +312,7 @@ echo "Section 2 - System Settings"
             echo "Settings have been applied and preferences refreshed."
         # 2.10.3 Ensure a Custom Message for the Login Screen Is Enabled
         echo "Section 2.10.3 - Ensure a Custom Message for the Login Screen Is Enabled"
-            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of Somerset Bridge Group computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the Somerset Bridge Group IT Security Policy. Somerset Bridge Group will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the Somerset Bridge Shared Services Ltd IT Team."
+            sudo /usr/bin/defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "WARNING: Unauthorized use of *Company Name* computers and networking resources is prohibited. If you log on to this computer system, you acknowledge your awareness of and concurrence with the *Company Name* IT Security Policy. *Company Name* will prosecute violators to the full extent of the law. If you suspect that your computer has been tampered with or modified in any way, please contact the *Company Name* IT Team."
         # 2.10.4 Ensure Login Window Displays as Name and Password Is Enabled
         echo "Section 2.10.4 - Ensure Login Window Displays as Name and Password Is Enabled"
             sudo defaults write "/Library/Preferences/com.apple.loginwindow" "SHOWFULLNAME" -bool true
